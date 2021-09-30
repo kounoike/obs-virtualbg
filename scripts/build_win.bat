@@ -116,7 +116,7 @@ popd
 
 goto END
 :ERR
-echo BUILD ERROR
+echo BUILD ERROR %ERRORLEVEL%
 exit /b 1
 
 
