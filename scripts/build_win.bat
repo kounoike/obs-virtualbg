@@ -6,7 +6,7 @@ cd ..
 
 set ONNXRUNTIME_VERSION=1.9.0
 set OPENCV_VERSION=4.4.0
-set OBS_VERSION=27.0.1
+set OBS_VERSION=27.1.1
 
 set DEPS_DIR=%CD%\deps
 
@@ -64,6 +64,8 @@ pushd deps
       -DBUILD_BROWSER=OFF ^
       -DBUILD_VST=OFF ^
       -DDISABLE_PLUGINS=ON ^
+      -DDISABLE_LUA=ON ^
+      -DDISABLE_PYTHON=ON ^
       ..
     IF ERRORLEVEL 1 GOTO ERR
     cmake --build . --config Release
