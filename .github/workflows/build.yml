@@ -13,7 +13,7 @@ jobs:
         cache-name: opencv
       with:
           path: deps/opencv
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('scripts/build_win.bat') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('scripts/build_opencv.bat') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
@@ -24,7 +24,7 @@ jobs:
         cache-name: obs
       with:
           path: deps/obs-studio
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('scripts/build_win.bat') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('scripts/build_obs.bat') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
