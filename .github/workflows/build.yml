@@ -7,5 +7,8 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v2
+    - uses: GuillaumeFalourd/setup-windows10-sdk-action@v1
+      with:
+        sdk-version: 19041
     - name: build
       run: .\scripts\build_win.bat
