@@ -55,6 +55,7 @@ pushd deps
   mkdir %OBS_BUILD_DIR%
   pushd %OBS_BUILD_DIR%
     cmake ^
+      -G"Visual Studio 16 2019" -A"x64" ^
       -DDepsPath=%OBS_DEPS_DIR%\win64 ^
       -DQTDIR=%QT_VERSION_DIR% ^
       -DQt5Widgets_DIR=%QT_VERSION_DIR%\msvc2019_64\lib\cmake\Qt5Widgets ^
@@ -62,6 +63,10 @@ pushd deps
       -DQt5Xml_DIR=%QT_VERSION_DIR%\msvc2019_64\lib\cmake\Qt5Xml ^
       -DBUILD_BROWSER=OFF ^
       -DBUILD_VST=OFF ^
+      -DDISABLE_PLUGINS=ON ^
+      -DDISABLE_LUA=ON ^
+      -DDISABLE_PYTHON=ON ^
+      -DCMAKE_SYSTEM_VERSION=10.0.18363.657 ^
       ..
     IF ERRORLEVEL 1 GOTO ERR
     cmake --build . --config Release
@@ -77,12 +82,17 @@ pushd deps
   mkdir %OPENCV_BUILD_DIR%
   pushd %OPENCV_BUILD_DIR%
     cmake ^
+      -G"Visual Studio 16 2019" -A"x64" ^
       -DBUILD_LIST=core,imgproc ^
       -DBUILD_SHARED_LIBS=OFF ^
       ..
     IF ERRORLEVEL 1 GOTO ERR
 
     cmake --build . --config Release
+    IF ERRORLEVEL 1 GOTO ERR
+    cmake --install . --prefix %DEPS_DIR%\opencv
+    IF ERRORLEVEL 1 GOTO ERR
+    cmake --build . --config Debug
     IF ERRORLEVEL 1 GOTO ERR
     cmake --install . --prefix %DEPS_DIR%\opencv
     IF ERRORLEVEL 1 GOTO ERR
@@ -99,6 +109,8 @@ pushd build
   cmake ^
     -DobsPath=%OBS_SRC_DIR% ^
     -DOnnxRuntimePath=%ONNXRUNTIME_DIR% ^
+    -DOpenCV_DIR=%OPENCV_BUILD_DIR% ^
+    -DCMAKE_SYSTEM_VERSION=10.0.18363.657 ^
     ..
   IF ERRORLEVEL 1 GOTO ERR
   cmake --build . --config RelWithDebInfo
@@ -109,7 +121,7 @@ popd
 
 goto END
 :ERR
-echo BUILD ERROR
+echo BUILD ERROR %ERRORLEVEL%
 exit /b 1
 
 

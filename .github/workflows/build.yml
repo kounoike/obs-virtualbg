@@ -7,5 +7,15 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v2
+    - name: Cache deps
+      uses: actions/cache@v2
+      with:
+          path: deps
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('scripts/build_win.bat') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+    - uses: GuillaumeFalourd/setup-windows10-sdk-action@v1
+      with:
+        sdk-version: 19041
     - name: build
       run: .\scripts\build_win.bat
