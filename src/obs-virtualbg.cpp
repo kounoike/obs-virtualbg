@@ -121,8 +121,7 @@ void *virtual_bg_create(obs_data_t *settings, obs_source_t *source) {
     blog(LOG_ERROR, "create failed %s");
     return NULL;
   }
-
-  blog(LOG_INFO, "Session Created");
+  blog(LOG_INFO, "ORT Session Created");
 
   blog(LOG_INFO, "virtual_bg_create");
   virtual_bg_update(filter_data, settings);
