@@ -66,6 +66,7 @@ pushd deps
       -DDISABLE_PLUGINS=ON ^
       -DDISABLE_LUA=ON ^
       -DDISABLE_PYTHON=ON ^
+      -DCMAKE_SYSTEM_VERSION=10.0.18363.657 ^
       ..
     IF ERRORLEVEL 1 GOTO ERR
     cmake --build . --config Release
