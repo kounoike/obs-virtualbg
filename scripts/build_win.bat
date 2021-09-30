@@ -4,8 +4,6 @@ setlocal enabledelayedexpansion
 cd %~dp0
 cd ..
 
-set BUILD_TARGET=RelWithDebInfo
-
 set ONNXRUNTIME_VERSION=1.9.0
 set OPENCV_VERSION=4.4.0
 set OBS_VERSION=27.0.1
@@ -66,7 +64,7 @@ pushd deps
       -DBUILD_VST=OFF ^
       ..
     IF ERRORLEVEL 1 GOTO ERR
-    cmake --build . --config %BUILD_TARGET%
+    cmake --build . --config Release
     IF ERRORLEVEL 1 GOTO ERR
   popd
   :OBS_BUILD_END
@@ -103,7 +101,7 @@ pushd build
     -DOnnxRuntimePath=%ONNXRUNTIME_DIR% ^
     ..
   IF ERRORLEVEL 1 GOTO ERR
-  cmake --build . --config %BUILD_TARGET%
+  cmake --build . --config RelWithDebInfo
   IF ERRORLEVEL 1 GOTO ERR
   cpack
   IF ERRORLEVEL 1 GOTO ERR
