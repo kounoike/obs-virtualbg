@@ -22,7 +22,7 @@ set OPENCV_BUILD_DIR=%OPENCV_SRC_DIR%\build
 set OBS_URL=https://github.com/obsproject/obs-studio/archive/refs/tags/%OBS_VERSION%.zip
 set OBS_ZIP=%DEPS_DIR%\obs-studio-%OBS_VERSION%.zip
 set OBS_SRC_DIR=%DEPS_DIR%\obs-studio-%OBS_VERSION%
-set OBS_BUILD_DIR=%OBS_SRC_DIR%\build
+set OBS_BUILD_DIR=%DEPS_DIR%\obs-studio
 
 set OBS_DEPS_URL=https://obsproject.com/downloads/dependencies2019.zip
 set OBS_DEPS_ZIP=%DEPS_DIR%\dependencies2019.zip
@@ -38,6 +38,8 @@ set QT_VERSION_DIR=%DEPS_DIR%\qt\%QT_VERSION%
 IF not exist deps mkdir deps
 pushd deps
 
+  IF exist %OBS_BUILD_DIR% goto OBS_BUILD_END
+
   IF not exist %OBS_DEPS_ZIP% curl -L -o %OBS_DEPS_ZIP% %OBS_DEPS_URL%
   IF not exist %OBS_DEPS_DIR% mkdir %OBS_DEPS_DIR%
   IF not exist %OBS_DEPS_DIR%\win64 7z x -o%OBS_DEPS_DIR% %OBS_DEPS_ZIP%
@@ -48,9 +50,6 @@ pushd deps
   IF not exist %QT_7Z% curl -L -o %QT_7Z% %QT_URL%
   IF not exist %QT_DIR% mkdir %QT_DIR%
   IF not exist %QT_VERSION_DIR% 7z x -o%QT_DIR% %QT_7Z%
-
-  IF exist %OBS_BUILD_DIR% goto OBS_BUILD_END
-  @REM IF exist %OBS_BUILD_DIR% rmdir /s /q %OBS_BUILD_DIR%
 
   mkdir %OBS_BUILD_DIR%
   pushd %OBS_BUILD_DIR%
@@ -67,7 +66,7 @@ pushd deps
       -DDISABLE_LUA=ON ^
       -DDISABLE_PYTHON=ON ^
       -DCMAKE_SYSTEM_VERSION=10.0.18363.657 ^
-      ..
+      %OBS_SRC_DIR%
     IF ERRORLEVEL 1 GOTO ERR
     cmake --build . --config Release
     IF ERRORLEVEL 1 GOTO ERR
