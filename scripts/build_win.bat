@@ -63,6 +63,7 @@ pushd deps
       -DQt5Xml_DIR=%QT_VERSION_DIR%\msvc2019_64\lib\cmake\Qt5Xml ^
       -DBUILD_BROWSER=OFF ^
       -DBUILD_VST=OFF ^
+      -DDISABLE_PLUGINS=ON ^
       ..
     IF ERRORLEVEL 1 GOTO ERR
     cmake --build . --config Release
