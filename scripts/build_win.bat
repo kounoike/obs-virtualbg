@@ -84,7 +84,7 @@ pushd deps
       ..
     IF ERRORLEVEL 1 GOTO ERR
 
-    cmake --build . --config %BUILD_TARGET%
+    cmake --build . --config Release
     IF ERRORLEVEL 1 GOTO ERR
     cmake --install . --prefix %DEPS_DIR%\opencv
     IF ERRORLEVEL 1 GOTO ERR
