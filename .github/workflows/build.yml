@@ -1,0 +1,11 @@
+name: build-windows
+on: push
+jobs:
+  build:
+    name: build
+    runs-on: windows-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: build
+      run: .\scripts\build_win.bat
