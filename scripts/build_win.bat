@@ -110,6 +110,7 @@ pushd build
     -DobsPath=%OBS_SRC_DIR% ^
     -DOnnxRuntimePath=%ONNXRUNTIME_DIR% ^
     -DOpenCV_DIR=%OPENCV_BUILD_DIR% ^
+    -DCMAKE_SYSTEM_VERSION=10.0.18363.657 ^
     ..
   IF ERRORLEVEL 1 GOTO ERR
   cmake --build . --config RelWithDebInfo
