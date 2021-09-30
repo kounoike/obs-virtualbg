@@ -1,4 +1,4 @@
-@echo on
+@echo off
 setlocal enabledelayedexpansion
 
 cd %~dp0
@@ -57,8 +57,8 @@ pushd %OBS_BUILD_DIR%
   cmake --build . --config Release
   IF ERRORLEVEL 1 GOTO ERR
 
-  cmake --install . --prefix %OBS_INSTALL_DIR%
 popd
+move %OBS_SRC_DIR% %OBS_INSTALL_DIR%
 :OBS_BUILD_END
 
 exit /b 0

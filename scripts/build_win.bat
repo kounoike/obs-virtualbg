@@ -1,4 +1,4 @@
-@echo off
+@echo on
 setlocal enabledelayedexpansion
 
 cd %~dp0
@@ -30,9 +30,9 @@ IF exist build rmdir /s /q build
 mkdir build
 pushd build
   cmake ^
-    -DobsPath=%OBS_SRC_DIR% ^
+    -DobsPath=%DEPS_DIR%\obs-studio ^
     -DOnnxRuntimePath=%ONNXRUNTIME_DIR% ^
-    -DOpenCV_DIR=%OPENCV_BUILD_DIR% ^
+    -DOpenCV_DIR=%DEPS_DIR%\opencv ^
     -DCMAKE_SYSTEM_VERSION=10.0.18363.657 ^
     ..
   IF ERRORLEVEL 1 GOTO ERR

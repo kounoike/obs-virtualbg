@@ -23,7 +23,6 @@ pushd %OPENCV_BUILD_DIR%
   cmake ^
     -G"Visual Studio 16 2019" -A"x64" ^
     -DBUILD_LIST=core,imgproc ^
-    -DBUILD_SHARED_LIBS=OFF ^
     ..
   IF ERRORLEVEL 1 GOTO ERR
 
