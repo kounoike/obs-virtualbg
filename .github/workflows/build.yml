@@ -31,3 +31,8 @@ jobs:
             ${{ runner.os }}-
     - name: build
       run: .\scripts\build_win.bat
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: windows-archive
+        path: build/obs-virtualbg-*.zip
