@@ -14,7 +14,7 @@ struct render_filter_data {
 
 const char *render_get_name(void *data) {
   UNUSED_PARAMETER(data);
-  return "obs-virtualbg-renderer";
+  return obs_module_text("VirtualBackGroundRenderFilter");
 }
 
 void render_destroy(void *data) {
