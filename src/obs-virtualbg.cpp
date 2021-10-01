@@ -184,10 +184,9 @@ struct obs_source_frame *virtual_bg_filter_video(void *data, struct obs_source_f
       (uint8_t *)bmalloc(sizeof(uint8_t) * filter_data->tensor_width * filter_data->tensor_height);
   const float *tensor_buffer2 = filter_data->output_tensor.GetTensorData<float>();
   for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
-    // float val = tensor_buffer2[i] * 0.9 + filter_data->feedback_buffer[i] * 0.1;
-    // filter_data->feedback_buffer[i] = val;
-    // buffer[i] = val < 0.8f ? 0 : 255;
-    buffer[i] = static_cast<uint8_t>(tensor_buffer2[i] * 255.0f);
+    float val = tensor_buffer2[i] * 0.9f + filter_data->feedback_buffer[i] * 0.1f;
+    buffer[i] = val < 0.4f ? 0 : 255;
+    filter_data->feedback_buffer[i] = buffer[i] / 255.0f;
   }
 
   set_mask_data(filter_data->parent, buffer);
