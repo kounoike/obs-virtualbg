@@ -89,11 +89,11 @@ void render_video_render(void *data, gs_effect_t *effect) {
     }
     uint32_t width = (uint32_t)get_mask_width(filter_data->parent);
     uint32_t height = (uint32_t)get_mask_height(filter_data->parent);
-    if (width < 0 || height < 0 || !filter_data->texture) {
+    if (width == 0 || height == 0 || !filter_data->texture) {
       set_texture(filter_data);
       width = (uint32_t)get_mask_width(filter_data->parent);
       height = (uint32_t)get_mask_height(filter_data->parent);
-      if (width < 0 || height < 0 || !filter_data->texture) {
+      if (width == 0 || height == 0 || !filter_data->texture) {
         return;
       }
     }
