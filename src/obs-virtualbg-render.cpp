@@ -105,7 +105,6 @@ void render_video_render(void *data, gs_effect_t *effect) {
     obs_leave_graphics();
 
     if (!obs_source_process_filter_begin(filter_data->self, GS_RGBA, OBS_ALLOW_DIRECT_RENDERING)) {
-      blog(LOG_ERROR, "obs_source_process_filter_begin returns false");
       return;
     }
     gs_effect_set_texture(filter_data->mask_param, filter_data->texture);
