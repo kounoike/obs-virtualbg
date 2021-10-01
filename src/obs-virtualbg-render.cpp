@@ -46,7 +46,6 @@ void set_texture(render_filter_data *filter_data) {
 void render_update(void *data, obs_data_t *settings) {
   UNUSED_PARAMETER(settings);
   render_filter_data *filter_data = static_cast<render_filter_data *>(data);
-  set_texture(filter_data);
 }
 
 void *render_create(obs_data_t *settings, obs_source_t *source) {
@@ -57,7 +56,6 @@ void *render_create(obs_data_t *settings, obs_source_t *source) {
   struct render_filter_data *filter_data =
       reinterpret_cast<render_filter_data *>(bzalloc(sizeof(struct render_filter_data)));
   filter_data->self = source;
-  filter_data->parent = obs_filter_get_parent(source);
   auto effect_file = obs_module_file("virtualbg.effect");
   blog(LOG_INFO, "effect_file: %s", effect_file);
   filter_data->effect = gs_effect_create_from_file(effect_file, NULL);
@@ -80,6 +78,14 @@ void render_video_render(void *data, gs_effect_t *effect) {
     render_filter_data *filter_data = static_cast<render_filter_data *>(data);
     if (filter_data == NULL) {
       return;
+    }
+    if (filter_data->parent == NULL) {
+      filter_data->parent = obs_filter_get_parent(filter_data->self);
+      blog(LOG_INFO, "render set parent: %X %s", filter_data->parent,
+           obs_source_get_name(filter_data->parent));
+    }
+    if (filter_data->texture == NULL) {
+      set_texture(filter_data);
     }
     uint32_t width = (uint32_t)get_mask_width(filter_data->parent);
     uint32_t height = (uint32_t)get_mask_height(filter_data->parent);
