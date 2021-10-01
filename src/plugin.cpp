@@ -8,15 +8,15 @@ OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("obs-virtualbg", "en-US")
 
 struct mask_data {
-  int width;
-  int height;
+  uint32_t width;
+  uint32_t height;
   uint8_t *buffer;
 };
 
 std::map<obs_source_t *, mask_data> data_map;
 std::mutex data_map_mtx;
 
-void create_mask_data(obs_source_t *source, int width, int height) {
+void create_mask_data(obs_source_t *source, uint32_t width, uint32_t height) {
   std::lock_guard<std::mutex> lock(data_map_mtx);
   struct mask_data data {
     .width = width, .height = height, .buffer = (uint8_t *)bzalloc(sizeof(uint8_t) * width * height),
@@ -44,21 +44,21 @@ void get_mask_data(obs_source_t *source, uint8_t *buffer) {
   }
 }
 
-int get_mask_width(obs_source_t *source) {
+uint32_t get_mask_width(obs_source_t *source) {
   std::lock_guard<std::mutex> lock(data_map_mtx);
   try {
     return data_map.at(source).width;
   } catch (const std::out_of_range &ex) {
-    return -1;
+    return 0;
   }
 }
 
-int get_mask_height(obs_source_t *source) {
+uint32_t get_mask_height(obs_source_t *source) {
   std::lock_guard<std::mutex> lock(data_map_mtx);
   try {
     return data_map.at(source).height;
   } catch (const std::out_of_range &ex) {
-    return -1;
+    return 0;
   }
 }
 
