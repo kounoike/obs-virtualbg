@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.18)
-project(obs-virtualbg)
+
+include(cmake/MunkeiVersionFromGit.cmake)
+version_from_git()
+
+project(obs-virtualbg VERSION ${VERSION})
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -110,6 +114,7 @@ if(WIN32)
   set(CPACK_GENERATOR "ZIP")
   set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
   set(CPACK_VERBATIM_VARIABLES YES)
+  set(CPACK_PACKAGE_VERSION v${SEMVER})
   include(CPack)
 endif()
 
