@@ -29,7 +29,7 @@ float lut[256];
 
 const char *virtual_bg_get_name(void *data) {
   UNUSED_PARAMETER(data);
-  return "obs-virtualbg";
+  return obs_module_text("VirtualBackGroundDetectorFilter");
 }
 
 void virtual_bg_destroy(void *data) {
