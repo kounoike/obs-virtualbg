@@ -20,6 +20,7 @@ struct virtual_bg_filter_data {
   Ort::Value input_tensor;
   Ort::Value output_tensor;
   uint8_t *input_u8_buffer;
+  float *feedback_buffer;
 };
 
 float lut[256];
@@ -40,6 +41,9 @@ void virtual_bg_destroy(void *data) {
   filter_data->allocator->Free(filter_data->output_names[0]);
   if (filter_data->preprocess_scaler) {
     video_scaler_destroy(filter_data->preprocess_scaler);
+  }
+  if (filter_data->feedback_buffer) {
+    bfree(filter_data->feedback_buffer);
   }
 
   bfree(filter_data);
@@ -126,6 +130,11 @@ void *virtual_bg_create(obs_data_t *settings, obs_source_t *source) {
   blog(LOG_INFO, "virtual_bg_create");
   virtual_bg_update(filter_data, settings);
   create_mask_data(filter_data->parent, filter_data->tensor_width, filter_data->tensor_height);
+  if (filter_data->feedback_buffer) {
+    bfree(filter_data->feedback_buffer);
+  }
+  filter_data->feedback_buffer =
+      (float *)bzalloc(sizeof(float) * filter_data->tensor_width * filter_data->tensor_height);
 
   for (int i = 0; i < 256; ++i) {
     lut[i] = i / 255.0f;
@@ -172,6 +181,9 @@ struct obs_source_frame *virtual_bg_filter_video(void *data, struct obs_source_f
       (uint8_t *)bmalloc(sizeof(uint8_t) * filter_data->tensor_width * filter_data->tensor_height);
   const float *tensor_buffer2 = filter_data->output_tensor.GetTensorData<float>();
   for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
+    // float val = tensor_buffer2[i] * 0.9 + filter_data->feedback_buffer[i] * 0.1;
+    // filter_data->feedback_buffer[i] = val;
+    // buffer[i] = val < 0.8f ? 0 : 255;
     buffer[i] = static_cast<uint8_t>(tensor_buffer2[i] * 255.0f);
   }
 
