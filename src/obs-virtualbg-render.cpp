@@ -28,10 +28,7 @@ void render_destroy(void *data) {
   blog(LOG_INFO, "render_destroy");
 }
 
-void render_update(void *data, obs_data_t *settings) {
-  UNUSED_PARAMETER(settings);
-  render_filter_data *filter_data = static_cast<render_filter_data *>(data);
-
+void set_texture(render_filter_data *filter_data) {
   int width = get_mask_width(filter_data->parent);
   int height = get_mask_height(filter_data->parent);
   if (width < 0 || height < 0) {
@@ -44,6 +41,12 @@ void render_update(void *data, obs_data_t *settings) {
   }
   filter_data->texture = gs_texture_create(width, height, GS_A8, 1, NULL, GS_DYNAMIC);
   obs_leave_graphics();
+}
+
+void render_update(void *data, obs_data_t *settings) {
+  UNUSED_PARAMETER(settings);
+  render_filter_data *filter_data = static_cast<render_filter_data *>(data);
+  set_texture(filter_data);
 }
 
 void *render_create(obs_data_t *settings, obs_source_t *source) {
@@ -80,8 +83,13 @@ void render_video_render(void *data, gs_effect_t *effect) {
     }
     uint32_t width = (uint32_t)get_mask_width(filter_data->parent);
     uint32_t height = (uint32_t)get_mask_height(filter_data->parent);
-    if (width < 0 || height < 0) {
-      return;
+    if (width < 0 || height < 0 || !filter_data->texture) {
+      set_texture(filter_data);
+      width = (uint32_t)get_mask_width(filter_data->parent);
+      height = (uint32_t)get_mask_height(filter_data->parent);
+      if (width < 0 || height < 0 || !filter_data->texture) {
+        return;
+      }
     }
     uint8_t *buffer = (uint8_t *)bmalloc(sizeof(uint8_t) * width * height);
     get_mask_data(filter_data->parent, buffer);
