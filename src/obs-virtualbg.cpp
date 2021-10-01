@@ -116,8 +116,6 @@ void *virtual_bg_create(obs_data_t *settings, obs_source_t *source) {
   struct virtual_bg_filter_data *filter_data =
       reinterpret_cast<virtual_bg_filter_data *>(bzalloc(sizeof(struct virtual_bg_filter_data)));
   filter_data->self = source;
-  filter_data->parent = obs_filter_get_parent(source);
-  // const char *source_name = obs_source_get_name(source);
   try {
     std::string instance_name{"virtual-background-inference"};
     filter_data->allocator.reset(new Ort::AllocatorWithDefaultOptions());
@@ -129,7 +127,6 @@ void *virtual_bg_create(obs_data_t *settings, obs_source_t *source) {
 
   blog(LOG_INFO, "virtual_bg_create");
   virtual_bg_update(filter_data, settings);
-  create_mask_data(filter_data->parent, filter_data->tensor_width, filter_data->tensor_height);
   if (filter_data->feedback_buffer) {
     bfree(filter_data->feedback_buffer);
   }
@@ -148,6 +145,12 @@ struct obs_source_frame *virtual_bg_filter_video(void *data, struct obs_source_f
   virtual_bg_filter_data *filter_data = static_cast<virtual_bg_filter_data *>(data);
   if (filter_data == NULL) {
     return frame;
+  }
+  if (filter_data->parent == NULL) {
+    filter_data->parent = obs_filter_get_parent(filter_data->self);
+    create_mask_data(filter_data->parent, filter_data->tensor_width, filter_data->tensor_height);
+    blog(LOG_INFO, "detector set parent: %X %s", filter_data->parent,
+         obs_source_get_name(filter_data->parent));
   }
 
   if (!filter_data->preprocess_scaler) {
