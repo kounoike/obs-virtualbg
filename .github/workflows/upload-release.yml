@@ -1,7 +1,7 @@
 on:
-  push:
-    tags:
-    - 'v*'
+  release:
+    types:
+      - published
 
 name: Upload Release Asset
 
