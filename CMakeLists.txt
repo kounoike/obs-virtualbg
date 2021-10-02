@@ -18,7 +18,7 @@ set(RELEASE_DIR "${PROJECT_SOURCE_DIR}/Release" CACHE STRING "Directory for buil
 
 set(SOURCES
     src/plugin.cpp
-    src/obs-virtualbg.cpp
+    src/obs-virtualbg-detector.cpp
     src/obs-virtualbg-render.cpp
 )
 

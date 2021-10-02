@@ -27,13 +27,13 @@ struct virtual_bg_filter_data {
 
 float lut[256];
 
-const char *virtual_bg_get_name(void *data) {
+const char *detector_get_name(void *data) {
   UNUSED_PARAMETER(data);
   return obs_module_text("VirtualBackGroundDetectorFilter");
 }
 
-void virtual_bg_destroy(void *data) {
-  blog(LOG_INFO, "virtual_bg_destroy");
+void detector_destroy(void *data) {
+  blog(LOG_INFO, "detector_destroy");
   virtual_bg_filter_data *filter_data = static_cast<virtual_bg_filter_data *>(data);
   if (filter_data == NULL) {
     return;
@@ -51,13 +51,13 @@ void virtual_bg_destroy(void *data) {
   bfree(filter_data);
 }
 
-void virtual_bg_update(void *data, obs_data_t *settings) {
+void detector_update(void *data, obs_data_t *settings) {
   virtual_bg_filter_data *filter_data = static_cast<virtual_bg_filter_data *>(data);
   if (filter_data == NULL) {
     return;
   }
   UNUSED_PARAMETER(settings);
-  blog(LOG_INFO, "virtual_bg_update");
+  blog(LOG_INFO, "detector_update");
 
   Ort::SessionOptions sessionOptions;
 
@@ -112,8 +112,8 @@ void virtual_bg_update(void *data, obs_data_t *settings) {
   blog(LOG_INFO, "vitual_bg_update done.");
 }
 
-void *virtual_bg_create(obs_data_t *settings, obs_source_t *source) {
-  blog(LOG_INFO, "Start virtual_bg_create");
+void *detector_create(obs_data_t *settings, obs_source_t *source) {
+  blog(LOG_INFO, "Start detector_create");
   UNUSED_PARAMETER(settings);
   struct virtual_bg_filter_data *filter_data =
       reinterpret_cast<virtual_bg_filter_data *>(bzalloc(sizeof(struct virtual_bg_filter_data)));
@@ -127,8 +127,8 @@ void *virtual_bg_create(obs_data_t *settings, obs_source_t *source) {
   }
   blog(LOG_INFO, "ORT Session Created");
 
-  blog(LOG_INFO, "virtual_bg_create");
-  virtual_bg_update(filter_data, settings);
+  blog(LOG_INFO, "detector_create");
+  detector_update(filter_data, settings);
   if (filter_data->feedback_buffer) {
     bfree(filter_data->feedback_buffer);
   }
@@ -142,7 +142,7 @@ void *virtual_bg_create(obs_data_t *settings, obs_source_t *source) {
   return filter_data;
 }
 
-struct obs_source_frame *virtual_bg_filter_video(void *data, struct obs_source_frame *frame) {
+struct obs_source_frame *detector_filter_video(void *data, struct obs_source_frame *frame) {
   auto start = std::chrono::high_resolution_clock::now();
   virtual_bg_filter_data *filter_data = static_cast<virtual_bg_filter_data *>(data);
   if (filter_data == NULL) {
@@ -213,8 +213,8 @@ struct obs_source_frame *virtual_bg_filter_video(void *data, struct obs_source_f
   return frame;
 }
 
-struct obs_source_info obs_virtualbg_source_info {
+struct obs_source_info obs_virtualbg_detector_source_info {
   .id = "virtualbg", .type = OBS_SOURCE_TYPE_FILTER, .output_flags = OBS_SOURCE_ASYNC_VIDEO,
-  .get_name = virtual_bg_get_name, .create = virtual_bg_create, .destroy = virtual_bg_destroy,
-  .update = virtual_bg_update, .filter_video = virtual_bg_filter_video
+  .get_name = detector_get_name, .create = detector_create, .destroy = detector_destroy,
+  .update = detector_update, .filter_video = detector_filter_video
 };

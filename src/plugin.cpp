@@ -72,11 +72,11 @@ void delete_mask_data(obs_source_t *source) {
   }
 }
 
-extern struct obs_source_info obs_virtualbg_source_info;
+extern struct obs_source_info obs_virtualbg_detector_source_info;
 extern struct obs_source_info obs_virtualbg_render_source_info;
 
 bool obs_module_load(void) {
-  obs_register_source(&obs_virtualbg_source_info);
+  obs_register_source(&obs_virtualbg_detector_source_info);
   obs_register_source(&obs_virtualbg_render_source_info);
   return true;
 }
