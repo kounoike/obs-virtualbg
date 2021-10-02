@@ -20,6 +20,7 @@ struct virtual_bg_filter_data {
   uint32_t frame_width;
   uint32_t frame_height;
   video_format frame_format;
+  bool frame_full_range;
   Ort::Value input_tensor;
   Ort::Value output_tensor;
   uint8_t *input_u8_buffer;
@@ -160,7 +161,7 @@ struct obs_source_frame *detector_filter_video(void *data, struct obs_source_fra
   }
 
   if (filter_data->frame_width != frame->width || filter_data->frame_height != frame->height ||
-      filter_data->frame_format != frame->format) {
+      filter_data->frame_format != frame->format || filter_data->frame_full_range != frame->full_range) {
     if (filter_data->preprocess_scaler) {
       video_scaler_destroy(filter_data->preprocess_scaler);
       filter_data->preprocess_scaler = NULL;
@@ -168,6 +169,7 @@ struct obs_source_frame *detector_filter_video(void *data, struct obs_source_fra
     filter_data->frame_width = frame->width;
     filter_data->frame_height = frame->height;
     filter_data->frame_format = frame->format;
+    filter_data->frame_full_range = frame->full_range;
   }
 
   if (!filter_data->preprocess_scaler) {
