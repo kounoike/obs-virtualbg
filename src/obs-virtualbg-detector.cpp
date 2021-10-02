@@ -6,6 +6,8 @@
 #include <obs.h>
 #include <onnxruntime_cxx_api.h>
 
+const char *USE_THRESHOLD = "UseThreashold";
+const char *THRESHOLD_VALUE = "ThresholdValue";
 struct virtual_bg_filter_data {
   obs_source_t *self;
   obs_source_t *parent;
@@ -26,6 +28,10 @@ struct virtual_bg_filter_data {
   uint8_t *input_u8_buffer;
   uint8_t *mask_u8_buffer;
   float *feedback_buffer;
+
+  // settings
+  bool use_threshold;
+  double threshold;
 };
 
 float lut[256];
@@ -65,8 +71,10 @@ void detector_update(void *data, obs_data_t *settings) {
   if (filter_data == NULL) {
     return;
   }
-  UNUSED_PARAMETER(settings);
   blog(LOG_INFO, "detector_update");
+
+  filter_data->use_threshold = obs_data_get_bool(settings, USE_THRESHOLD);
+  filter_data->threshold = (float)obs_data_get_double(settings, THRESHOLD_VALUE);
 
   Ort::SessionOptions sessionOptions;
 
@@ -153,6 +161,19 @@ void *detector_create(obs_data_t *settings, obs_source_t *source) {
   return filter_data;
 }
 
+void detector_defaults(obs_data_t *settings) {
+  obs_data_set_default_bool(settings, USE_THRESHOLD, TRUE);
+  obs_data_set_default_double(settings, THRESHOLD_VALUE, 0.5);
+}
+
+obs_properties_t *detector_properties(void *data) {
+  UNUSED_PARAMETER(data);
+  obs_properties_t *ppts = obs_properties_create();
+  obs_properties_add_bool(ppts, USE_THRESHOLD, obs_module_text(USE_THRESHOLD));
+  obs_properties_add_float_slider(ppts, THRESHOLD_VALUE, obs_module_text(THRESHOLD_VALUE), 0.0, 1.0, 0.05);
+  return ppts;
+}
+
 struct obs_source_frame *detector_filter_video(void *data, struct obs_source_frame *frame) {
   auto start = std::chrono::high_resolution_clock::now();
   virtual_bg_filter_data *filter_data = static_cast<virtual_bg_filter_data *>(data);
@@ -190,7 +211,7 @@ struct obs_source_frame *detector_filter_video(void *data, struct obs_source_fra
           (uint32_t)filter_data->tensor_height, VIDEO_RANGE_DEFAULT, VIDEO_CS_DEFAULT
     };
     int ret = video_scaler_create(&filter_data->preprocess_scaler, &tensor_scaler_info, &frame_scaler_info,
-                                  VIDEO_SCALE_DEFAULT);
+                                  VIDEO_SCALE_BICUBIC);
     if (ret != 0) {
       blog(LOG_ERROR, "Can't create video_scaler_create %d", ret);
       return frame;
@@ -214,10 +235,18 @@ struct obs_source_frame *detector_filter_video(void *data, struct obs_source_fra
                             filter_data->output_names, &filter_data->output_tensor, 1);
 
   const float *tensor_buffer2 = filter_data->output_tensor.GetTensorData<float>();
-  for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
-    float val = tensor_buffer2[i] * 0.9f + filter_data->feedback_buffer[i] * 0.1f;
-    filter_data->mask_u8_buffer[i] = val * 255.0f;
-    filter_data->feedback_buffer[i] = val;
+  if (filter_data->use_threshold) {
+    for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
+      float val = tensor_buffer2[i] * 0.9f + filter_data->feedback_buffer[i] * 0.1f;
+      filter_data->mask_u8_buffer[i] = val >= filter_data->threshold ? 255 : 0;
+      filter_data->feedback_buffer[i] = val / 255.0f;
+    }
+  } else {
+    for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
+      float val = tensor_buffer2[i] * 0.9f + filter_data->feedback_buffer[i] * 0.1f;
+      filter_data->feedback_buffer[i] = val;
+      filter_data->mask_u8_buffer[i] = val * 255.0f;
+    }
   }
 
   set_mask_data(filter_data->parent, filter_data->mask_u8_buffer);
@@ -234,5 +263,6 @@ struct obs_source_frame *detector_filter_video(void *data, struct obs_source_fra
 struct obs_source_info obs_virtualbg_detector_source_info {
   .id = "virtualbg", .type = OBS_SOURCE_TYPE_FILTER, .output_flags = OBS_SOURCE_ASYNC_VIDEO,
   .get_name = detector_get_name, .create = detector_create, .destroy = detector_destroy,
-  .update = detector_update, .filter_video = detector_filter_video
+  .get_defaults = detector_defaults, .get_properties = detector_properties, .update = detector_update,
+  .filter_video = detector_filter_video
 };
