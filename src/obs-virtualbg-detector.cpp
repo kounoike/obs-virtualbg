@@ -44,6 +44,9 @@ void detector_destroy(void *data) {
   if (filter_data->preprocess_scaler) {
     video_scaler_destroy(filter_data->preprocess_scaler);
   }
+  if (filter_data->input_u8_buffer) {
+    bfree(filter_data->input_u8_buffer);
+  }
   if (filter_data->feedback_buffer) {
     bfree(filter_data->feedback_buffer);
   }
