@@ -9,6 +9,9 @@ struct render_filter_data {
   gs_effect_t *effect;
   gs_texture_t *texture;
   gs_eparam_t *mask_param;
+  uint8_t *mask_buffer;
+  uint32_t mask_width;
+  uint32_t mask_height;
   int cnt;
 };
 
@@ -24,6 +27,9 @@ void render_destroy(void *data) {
     gs_effect_destroy(filter_data->effect);
     bfree(filter_data);
     obs_leave_graphics();
+  }
+  if (filter_data->mask_buffer) {
+    bfree(filter_data->mask_buffer);
   }
   blog(LOG_INFO, "render_destroy");
 }
@@ -97,11 +103,23 @@ void render_video_render(void *data, gs_effect_t *effect) {
         return;
       }
     }
-    uint8_t *buffer = (uint8_t *)bmalloc(sizeof(uint8_t) * width * height);
-    get_mask_data(filter_data->parent, buffer);
+
+    if (filter_data->mask_width != width || filter_data->mask_height != height) {
+      if (filter_data->mask_buffer) {
+        bfree(filter_data->mask_buffer);
+        filter_data->mask_buffer = NULL;
+      }
+      filter_data->mask_width = width;
+      filter_data->mask_height = height;
+    }
+
+    if (!filter_data->mask_buffer) {
+      filter_data->mask_buffer = (uint8_t *)bmalloc(sizeof(uint8_t) * width * height);
+    }
+    get_mask_data(filter_data->parent, filter_data->mask_buffer);
 
     obs_enter_graphics();
-    gs_texture_set_image(filter_data->texture, buffer, width, false);
+    gs_texture_set_image(filter_data->texture, filter_data->mask_buffer, width, false);
     obs_leave_graphics();
 
     if (!obs_source_process_filter_begin(filter_data->self, GS_RGBA, OBS_ALLOW_DIRECT_RENDERING)) {
@@ -114,7 +132,6 @@ void render_video_render(void *data, gs_effect_t *effect) {
       blog(LOG_INFO, "called %d", filter_data->cnt);
     }
     filter_data->cnt++;
-    bfree(buffer);
   } catch (const std::exception &ex) {
     blog(LOG_ERROR, "error %s", ex.what());
   }
