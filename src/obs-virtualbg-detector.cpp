@@ -19,6 +19,7 @@ struct virtual_bg_filter_data {
   int64_t tensor_height;
   uint32_t frame_width;
   uint32_t frame_height;
+  video_format frame_format;
   Ort::Value input_tensor;
   Ort::Value output_tensor;
   uint8_t *input_u8_buffer;
@@ -158,13 +159,15 @@ struct obs_source_frame *detector_filter_video(void *data, struct obs_source_fra
          obs_source_get_name(filter_data->parent));
   }
 
-  if (filter_data->frame_width != frame->width || filter_data->frame_height != frame->height) {
+  if (filter_data->frame_width != frame->width || filter_data->frame_height != frame->height ||
+      filter_data->frame_format != frame->format) {
     if (filter_data->preprocess_scaler) {
       video_scaler_destroy(filter_data->preprocess_scaler);
       filter_data->preprocess_scaler = NULL;
     }
     filter_data->frame_width = frame->width;
     filter_data->frame_height = frame->height;
+    filter_data->frame_format = frame->format;
   }
 
   if (!filter_data->preprocess_scaler) {
@@ -178,8 +181,12 @@ struct obs_source_frame *detector_filter_video(void *data, struct obs_source_fra
       VIDEO_FORMAT_BGR3, (uint32_t)filter_data->tensor_width,
           (uint32_t)filter_data->tensor_height, VIDEO_RANGE_DEFAULT, VIDEO_CS_DEFAULT
     };
-    video_scaler_create(&filter_data->preprocess_scaler, &tensor_scaler_info, &frame_scaler_info,
-                        VIDEO_SCALE_DEFAULT);
+    int ret = video_scaler_create(&filter_data->preprocess_scaler, &tensor_scaler_info, &frame_scaler_info,
+                                  VIDEO_SCALE_DEFAULT);
+    if (ret != 0) {
+      blog(LOG_ERROR, "Can't create video_scaler_create %d", ret);
+      return frame;
+    }
   }
 
   const uint32_t linesize[] = {(uint32_t)filter_data->tensor_width * 3};
