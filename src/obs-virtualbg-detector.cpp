@@ -24,6 +24,7 @@ struct virtual_bg_filter_data {
   Ort::Value input_tensor;
   Ort::Value output_tensor;
   uint8_t *input_u8_buffer;
+  uint8_t *mask_u8_buffer;
   float *feedback_buffer;
 };
 
@@ -48,6 +49,9 @@ void detector_destroy(void *data) {
   }
   if (filter_data->input_u8_buffer) {
     bfree(filter_data->input_u8_buffer);
+  }
+  if (filter_data->mask_u8_buffer) {
+    bfree(filter_data->mask_u8_buffer);
   }
   if (filter_data->feedback_buffer) {
     bfree(filter_data->feedback_buffer);
@@ -101,9 +105,11 @@ void detector_update(void *data, obs_data_t *settings) {
     bfree(filter_data->input_u8_buffer);
   }
   filter_data->input_u8_buffer =
-      (uint8_t *)bmalloc(filter_data->tensor_width * filter_data->tensor_height * 3);
+      (uint8_t *)bmalloc(sizeof(uint8_t) * filter_data->tensor_width * filter_data->tensor_height * 3);
   blog(LOG_INFO, "model loaded input:%s tensor: %dx%d", filter_data->input_names[0],
        filter_data->tensor_width, filter_data->tensor_height);
+  filter_data->mask_u8_buffer =
+      (uint8_t *)bmalloc(sizeof(uint8_t) * filter_data->tensor_width * filter_data->tensor_height);
 
   filter_data->input_tensor =
       Ort::Value::CreateTensor<float>(*filter_data->allocator, input_dims.data(), input_dims.size());
@@ -192,8 +198,12 @@ struct obs_source_frame *detector_filter_video(void *data, struct obs_source_fra
   }
 
   const uint32_t linesize[] = {(uint32_t)filter_data->tensor_width * 3};
-  video_scaler_scale(filter_data->preprocess_scaler, &filter_data->input_u8_buffer, linesize, frame->data,
-                     frame->linesize);
+  if (!video_scaler_scale(filter_data->preprocess_scaler, &filter_data->input_u8_buffer, linesize,
+                          frame->data, frame->linesize)) {
+    blog(LOG_ERROR, "video_scaler_scale failed.");
+    return frame;
+  }
+
   float *tensor_buffer = filter_data->input_tensor.GetTensorMutableData<float>();
   for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
     tensor_buffer[i * 3 + 0] = lut[filter_data->input_u8_buffer[i * 3 + 2]];
@@ -203,18 +213,14 @@ struct obs_source_frame *detector_filter_video(void *data, struct obs_source_fra
   filter_data->session->Run(Ort::RunOptions(NULL), filter_data->input_names, &filter_data->input_tensor, 1,
                             filter_data->output_names, &filter_data->output_tensor, 1);
 
-  uint8_t *buffer =
-      (uint8_t *)bmalloc(sizeof(uint8_t) * filter_data->tensor_width * filter_data->tensor_height);
   const float *tensor_buffer2 = filter_data->output_tensor.GetTensorData<float>();
   for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
     float val = tensor_buffer2[i] * 0.9f + filter_data->feedback_buffer[i] * 0.1f;
-    // buffer[i] = val < 0.4f ? 0 : 255;
-    buffer[i] = val * 255.0f;
-    filter_data->feedback_buffer[i] = buffer[i] / 255.0f;
+    filter_data->mask_u8_buffer[i] = val * 255.0f;
+    filter_data->feedback_buffer[i] = val;
   }
 
-  set_mask_data(filter_data->parent, buffer);
-  bfree(buffer);
+  set_mask_data(filter_data->parent, filter_data->mask_u8_buffer);
 
   if (filter_data->cnt % 300 == 0) {
     auto stop = std::chrono::high_resolution_clock::now();
