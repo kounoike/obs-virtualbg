@@ -12,30 +12,20 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v2
-    - name: Cache deps
-      uses: actions/cache@v2
-      env:
-        cache-name: opencv
-      with:
-          path: deps/opencv
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('scripts/build_opencv.bat') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-    - name: Cache deps
+    - name: Cache OBS Studio deps
       uses: actions/cache@v2
       env:
         cache-name: obs
       with:
           path: deps/obs-studio
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('scripts/build_obs.bat') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
     - name: build
       run: .\scripts\build_win.bat
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: windows-archive
+        path: build/obs-virtualbg-*.zip
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
       with:

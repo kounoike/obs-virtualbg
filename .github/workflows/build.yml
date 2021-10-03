@@ -9,13 +9,6 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
-    - name: Cache OpenCV deps
-      uses: actions/cache@v2
-      env:
-        cache-name: opencv
-      with:
-          path: deps/opencv
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('scripts/build_opencv.bat') }}
     - name: Cache OBS-Studio deps
       uses: actions/cache@v2
       env:
