@@ -1,4 +1,6 @@
 #include "plugin.hpp"
+#include <HalideBuffer.h>
+#include <blur.h>
 #include <chrono>
 #include <dml_provider_factory.h>
 #include <media-io/video-scaler.h>
@@ -8,6 +10,8 @@
 
 const char *USE_THRESHOLD = "UseThreashold";
 const char *THRESHOLD_VALUE = "ThresholdValue";
+const char *USE_MASK_BLUR = "UseMaskBlur";
+
 struct virtual_bg_filter_data {
   obs_source_t *self;
   obs_source_t *parent;
@@ -27,11 +31,13 @@ struct virtual_bg_filter_data {
   Ort::Value output_tensor;
   uint8_t *input_u8_buffer;
   uint8_t *mask_u8_buffer;
+  uint8_t *mask_blurred_u8_buffer;
   float *feedback_buffer;
 
   // settings
   bool use_threshold;
   double threshold;
+  bool use_mask_blur;
 };
 
 float lut[256];
@@ -59,6 +65,9 @@ void detector_destroy(void *data) {
   if (filter_data->mask_u8_buffer) {
     bfree(filter_data->mask_u8_buffer);
   }
+  if (filter_data->mask_blurred_u8_buffer) {
+    bfree(filter_data->mask_blurred_u8_buffer);
+  }
   if (filter_data->feedback_buffer) {
     bfree(filter_data->feedback_buffer);
   }
@@ -75,6 +84,7 @@ void detector_update(void *data, obs_data_t *settings) {
 
   filter_data->use_threshold = obs_data_get_bool(settings, USE_THRESHOLD);
   filter_data->threshold = (float)obs_data_get_double(settings, THRESHOLD_VALUE);
+  filter_data->use_mask_blur = obs_data_get_bool(settings, USE_MASK_BLUR);
 
   Ort::SessionOptions sessionOptions;
 
@@ -117,6 +127,8 @@ void detector_update(void *data, obs_data_t *settings) {
   blog(LOG_INFO, "model loaded input:%s tensor: %dx%d", filter_data->input_names[0],
        filter_data->tensor_width, filter_data->tensor_height);
   filter_data->mask_u8_buffer =
+      (uint8_t *)bmalloc(sizeof(uint8_t) * filter_data->tensor_width * filter_data->tensor_height);
+  filter_data->mask_blurred_u8_buffer =
       (uint8_t *)bmalloc(sizeof(uint8_t) * filter_data->tensor_width * filter_data->tensor_height);
 
   filter_data->input_tensor =
@@ -164,6 +176,7 @@ void *detector_create(obs_data_t *settings, obs_source_t *source) {
 void detector_defaults(obs_data_t *settings) {
   obs_data_set_default_bool(settings, USE_THRESHOLD, TRUE);
   obs_data_set_default_double(settings, THRESHOLD_VALUE, 0.5);
+  obs_data_set_default_bool(settings, USE_MASK_BLUR, TRUE);
 }
 
 obs_properties_t *detector_properties(void *data) {
@@ -171,6 +184,7 @@ obs_properties_t *detector_properties(void *data) {
   obs_properties_t *ppts = obs_properties_create();
   obs_properties_add_bool(ppts, USE_THRESHOLD, obs_module_text(USE_THRESHOLD));
   obs_properties_add_float_slider(ppts, THRESHOLD_VALUE, obs_module_text(THRESHOLD_VALUE), 0.0, 1.0, 0.05);
+  obs_properties_add_bool(ppts, USE_MASK_BLUR, obs_module_text(USE_MASK_BLUR));
   return ppts;
 }
 
@@ -239,17 +253,29 @@ struct obs_source_frame *detector_filter_video(void *data, struct obs_source_fra
     for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
       float val = tensor_buffer2[i] * 0.9f + filter_data->feedback_buffer[i] * 0.1f;
       filter_data->mask_u8_buffer[i] = val >= filter_data->threshold ? 255 : 0;
-      filter_data->feedback_buffer[i] = val / 255.0f;
     }
   } else {
     for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
-      float val = tensor_buffer2[i] * 0.9f + filter_data->feedback_buffer[i] * 0.1f;
-      filter_data->feedback_buffer[i] = val;
+      float val = tensor_buffer2[i] * 0.8f + filter_data->feedback_buffer[i] * 0.2f;
       filter_data->mask_u8_buffer[i] = val * 255.0f;
     }
   }
 
-  set_mask_data(filter_data->parent, filter_data->mask_u8_buffer);
+  if (filter_data->use_mask_blur) {
+    Halide::Runtime::Buffer<uint8_t> input{filter_data->mask_u8_buffer, (int)filter_data->tensor_width,
+                                           filter_data->tensor_height};
+    Halide::Runtime::Buffer<uint8_t> output{filter_data->mask_blurred_u8_buffer,
+                                            (int)filter_data->tensor_width, filter_data->tensor_height};
+
+    blur(input, output);
+    for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
+      filter_data->feedback_buffer[i] = filter_data->mask_blurred_u8_buffer[i] / 255.0f;
+    }
+
+    set_mask_data(filter_data->parent, filter_data->mask_blurred_u8_buffer);
+  } else {
+    set_mask_data(filter_data->parent, filter_data->mask_u8_buffer);
+  }
 
   if (filter_data->cnt % 300 == 0) {
     auto stop = std::chrono::high_resolution_clock::now();

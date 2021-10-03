@@ -7,12 +7,17 @@ project(obs-virtualbg VERSION ${VERSION})
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-# include(cmake/FindLibObs.cmake)
+find_package(Threads REQUIRED)
 find_package(LibObs REQUIRED)
 find_package(OnnxRuntime REQUIRED)
 find_package(OpenCV REQUIRED)
+
+#find_package(HalideHelpers REQUIRED)
+find_package(Halide REQUIRED COMPONENTS shared)
+# find_package(Halide REQUIRED)
 
 set(RELEASE_DIR "${PROJECT_SOURCE_DIR}/Release" CACHE STRING "Directory for building release packages")
 
@@ -21,6 +26,10 @@ set(SOURCES
     src/obs-virtualbg-detector.cpp
     src/obs-virtualbg-render.cpp
 )
+
+add_executable(blur_generator src/blur_gen.cpp)
+target_link_libraries(blur_generator PRIVATE Halide::Generator)
+add_halide_library(blur FROM blur_generator GENERATOR blur_generator)
 
 add_library(${CMAKE_PROJECT_NAME} MODULE
     ${SOURCES})
@@ -36,7 +45,10 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 	${LIBOBS_LIBRARIES}
   ${OnnxRuntime_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  blur
+  Halide::RunGenMain
 )
+
 
 if(WIN32)
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
