@@ -67,6 +67,8 @@ if(WIN32)
 # --- Release package helper ---
 	# The "release" folder has a structure similar OBS' one on Windows
 	set(RELEASE_DIR "${PROJECT_SOURCE_DIR}/release")
+  MESSAGE("*******************ONNXRUNTIME: ${OnnxRuntimePath}/runtimes/win-x64/native/onnxruntime.dll **********")
+
 
     add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
         # If config is Release or RelWithDebInfo, package release files
@@ -85,6 +87,13 @@ if(WIN32)
         COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
             "${CMAKE_COMMAND}" -E copy
                 "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>"
+                "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
+        )
+
+        # package the onnxruntime DLL with the plugin DLL
+        COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
+            "${CMAKE_COMMAND}" -E copy
+                "${OnnxRuntimePath}/runtimes/win-x64/native/onnxruntime.dll"
                 "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
         )
 
