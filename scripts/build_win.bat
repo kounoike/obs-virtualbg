@@ -29,8 +29,6 @@ popd
 
 call %~dp0\build_obs.bat
 IF ERRORLEVEL 1 goto ERR
-call %~dp0\build_opencv.bat
-IF ERRORLEVEL 1 goto ERR
 
 IF exist build rmdir /s /q build
 mkdir build
@@ -38,7 +36,6 @@ pushd build
   cmake ^
     -DobsPath=%DEPS_DIR%\obs-studio ^
     -DOnnxRuntimePath=%ONNXRUNTIME_DIR% ^
-    -DOpenCV_DIR=%DEPS_DIR%\opencv ^
     -DCMAKE_SYSTEM_VERSION=10.0.18363.657 ^
     -DHalide_DIR=%HALIDE_DIR%\lib\cmake\Halide ^
     -DHalideHelpers_DIR=%HALIDE_DIR%\lib\cmake\HalideHelpers ^

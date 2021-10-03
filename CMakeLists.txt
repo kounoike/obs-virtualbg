@@ -13,7 +13,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 find_package(Threads REQUIRED)
 find_package(LibObs REQUIRED)
 find_package(OnnxRuntime REQUIRED)
-find_package(OpenCV REQUIRED)
 
 #find_package(HalideHelpers REQUIRED)
 find_package(Halide REQUIRED COMPONENTS shared)
@@ -38,13 +37,11 @@ include_directories(
     ${LIBOBS_INCLUDE_DIR}
     ${LIBOBS_INCLUDE_DIRS}
     ${OnnxRuntime_INCLUDE_DIR}
-    ${OpenCV_INCLUDE_DIRS}
 )
     
 target_link_libraries(${CMAKE_PROJECT_NAME}
 	${LIBOBS_LIBRARIES}
   ${OnnxRuntime_LIBRARIES}
-  ${OpenCV_LIBRARIES}
   blur
   Halide::RunGenMain
 )
