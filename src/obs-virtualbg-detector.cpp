@@ -48,7 +48,6 @@ const char *detector_get_name(void *data) {
 }
 
 void detector_destroy(void *data) {
-  blog(LOG_INFO, "detector_destroy");
   virtual_bg_filter_data *filter_data = static_cast<virtual_bg_filter_data *>(data);
   if (filter_data == NULL) {
     return;
@@ -80,7 +79,6 @@ void detector_update(void *data, obs_data_t *settings) {
   if (filter_data == NULL) {
     return;
   }
-  blog(LOG_INFO, "detector_update");
 
   filter_data->use_threshold = obs_data_get_bool(settings, USE_THRESHOLD);
   filter_data->threshold = (float)obs_data_get_double(settings, THRESHOLD_VALUE);
@@ -105,7 +103,7 @@ void detector_update(void *data, obs_data_t *settings) {
     static Ort::Env env(ORT_LOGGING_LEVEL_ERROR, "virtual_bg inference");
     filter_data->session.reset(new Ort::Session(env, wcharModelPath, sessionOptions));
   } catch (const std::exception &ex) {
-    blog(LOG_ERROR, "Can't create Session error: %s", ex.what());
+    blog(LOG_ERROR, "[Virtual BG detector] Can't create Session error: %s", ex.what());
     bfree(wcharModelPath);
     return;
   }
@@ -124,8 +122,6 @@ void detector_update(void *data, obs_data_t *settings) {
   }
   filter_data->input_u8_buffer =
       (uint8_t *)bmalloc(sizeof(uint8_t) * filter_data->tensor_width * filter_data->tensor_height * 3);
-  blog(LOG_INFO, "model loaded input:%s tensor: %dx%d", filter_data->input_names[0],
-       filter_data->tensor_width, filter_data->tensor_height);
   filter_data->mask_u8_buffer =
       (uint8_t *)bmalloc(sizeof(uint8_t) * filter_data->tensor_width * filter_data->tensor_height);
   filter_data->mask_blurred_u8_buffer =
@@ -140,11 +136,9 @@ void detector_update(void *data, obs_data_t *settings) {
     video_scaler_destroy(filter_data->preprocess_scaler);
     filter_data->preprocess_scaler = NULL;
   }
-  blog(LOG_INFO, "vitual_bg_update done.");
 }
 
 void *detector_create(obs_data_t *settings, obs_source_t *source) {
-  blog(LOG_INFO, "Start detector_create");
   UNUSED_PARAMETER(settings);
   struct virtual_bg_filter_data *filter_data =
       reinterpret_cast<virtual_bg_filter_data *>(bzalloc(sizeof(struct virtual_bg_filter_data)));
@@ -156,9 +150,7 @@ void *detector_create(obs_data_t *settings, obs_source_t *source) {
     blog(LOG_ERROR, "create failed %s");
     return NULL;
   }
-  blog(LOG_INFO, "ORT Session Created");
 
-  blog(LOG_INFO, "detector_create");
   detector_update(filter_data, settings);
   if (filter_data->feedback_buffer) {
     bfree(filter_data->feedback_buffer);
@@ -189,100 +181,101 @@ obs_properties_t *detector_properties(void *data) {
 }
 
 struct obs_source_frame *detector_filter_video(void *data, struct obs_source_frame *frame) {
-  auto start = std::chrono::high_resolution_clock::now();
-  virtual_bg_filter_data *filter_data = static_cast<virtual_bg_filter_data *>(data);
-  if (filter_data == NULL) {
-    return frame;
-  }
-  if (filter_data->parent == NULL) {
-    filter_data->parent = obs_filter_get_parent(filter_data->self);
-    create_mask_data(filter_data->parent, filter_data->tensor_width, filter_data->tensor_height);
-    blog(LOG_INFO, "detector set parent: %X %s", filter_data->parent,
-         obs_source_get_name(filter_data->parent));
-  }
-
-  if (filter_data->frame_width != frame->width || filter_data->frame_height != frame->height ||
-      filter_data->frame_format != frame->format || filter_data->frame_full_range != frame->full_range) {
-    if (filter_data->preprocess_scaler) {
-      video_scaler_destroy(filter_data->preprocess_scaler);
-      filter_data->preprocess_scaler = NULL;
-    }
-    filter_data->frame_width = frame->width;
-    filter_data->frame_height = frame->height;
-    filter_data->frame_format = frame->format;
-    filter_data->frame_full_range = frame->full_range;
-  }
-
-  if (!filter_data->preprocess_scaler) {
-    blog(LOG_INFO, "frame: %dx%d tensor: %dx%d", frame->width, frame->height, filter_data->tensor_width,
-         filter_data->tensor_height);
-    struct video_scale_info frame_scaler_info {
-      frame->format, frame->width, frame->height, frame->full_range ? VIDEO_RANGE_FULL : VIDEO_RANGE_DEFAULT,
-          VIDEO_CS_DEFAULT
-    };
-    struct video_scale_info tensor_scaler_info {
-      VIDEO_FORMAT_BGR3, (uint32_t)filter_data->tensor_width,
-          (uint32_t)filter_data->tensor_height, VIDEO_RANGE_DEFAULT, VIDEO_CS_DEFAULT
-    };
-    int ret = video_scaler_create(&filter_data->preprocess_scaler, &tensor_scaler_info, &frame_scaler_info,
-                                  VIDEO_SCALE_BICUBIC);
-    if (ret != 0) {
-      blog(LOG_ERROR, "Can't create video_scaler_create %d", ret);
+  try {
+    auto start = std::chrono::high_resolution_clock::now();
+    virtual_bg_filter_data *filter_data = static_cast<virtual_bg_filter_data *>(data);
+    if (filter_data == NULL) {
       return frame;
     }
-  }
-
-  const uint32_t linesize[] = {(uint32_t)filter_data->tensor_width * 3};
-  if (!video_scaler_scale(filter_data->preprocess_scaler, &filter_data->input_u8_buffer, linesize,
-                          frame->data, frame->linesize)) {
-    blog(LOG_ERROR, "video_scaler_scale failed.");
-    return frame;
-  }
-
-  float *tensor_buffer = filter_data->input_tensor.GetTensorMutableData<float>();
-  for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
-    tensor_buffer[i * 3 + 0] = lut[filter_data->input_u8_buffer[i * 3 + 2]];
-    tensor_buffer[i * 3 + 1] = lut[filter_data->input_u8_buffer[i * 3 + 1]];
-    tensor_buffer[i * 3 + 2] = lut[filter_data->input_u8_buffer[i * 3 + 0]];
-  }
-  filter_data->session->Run(Ort::RunOptions(NULL), filter_data->input_names, &filter_data->input_tensor, 1,
-                            filter_data->output_names, &filter_data->output_tensor, 1);
-
-  const float *tensor_buffer2 = filter_data->output_tensor.GetTensorData<float>();
-  if (filter_data->use_threshold) {
-    for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
-      float val = tensor_buffer2[i] * 0.9f + filter_data->feedback_buffer[i] * 0.1f;
-      filter_data->mask_u8_buffer[i] = val >= filter_data->threshold ? 255 : 0;
-    }
-  } else {
-    for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
-      float val = tensor_buffer2[i] * 0.8f + filter_data->feedback_buffer[i] * 0.2f;
-      filter_data->mask_u8_buffer[i] = val * 255.0f;
-    }
-  }
-
-  if (filter_data->use_mask_blur) {
-    Halide::Runtime::Buffer<uint8_t> input{filter_data->mask_u8_buffer, (int)filter_data->tensor_width,
-                                           filter_data->tensor_height};
-    Halide::Runtime::Buffer<uint8_t> output{filter_data->mask_blurred_u8_buffer,
-                                            (int)filter_data->tensor_width, filter_data->tensor_height};
-
-    blur(input, output);
-    for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
-      filter_data->feedback_buffer[i] = filter_data->mask_blurred_u8_buffer[i] / 255.0f;
+    if (filter_data->parent == NULL) {
+      filter_data->parent = obs_filter_get_parent(filter_data->self);
+      create_mask_data(filter_data->parent, filter_data->tensor_width, filter_data->tensor_height);
     }
 
-    set_mask_data(filter_data->parent, filter_data->mask_blurred_u8_buffer);
-  } else {
-    set_mask_data(filter_data->parent, filter_data->mask_u8_buffer);
-  }
+    if (filter_data->frame_width != frame->width || filter_data->frame_height != frame->height ||
+        filter_data->frame_format != frame->format || filter_data->frame_full_range != frame->full_range) {
+      if (filter_data->preprocess_scaler) {
+        video_scaler_destroy(filter_data->preprocess_scaler);
+        filter_data->preprocess_scaler = NULL;
+      }
+      filter_data->frame_width = frame->width;
+      filter_data->frame_height = frame->height;
+      filter_data->frame_format = frame->format;
+      filter_data->frame_full_range = frame->full_range;
+    }
 
-  if (filter_data->cnt % 300 == 0) {
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
-    blog(LOG_INFO, "called filter_video %d duration: %f", filter_data->cnt, duration.count() / 1000000.0);
+    if (!filter_data->preprocess_scaler) {
+      struct video_scale_info frame_scaler_info {
+        frame->format, frame->width, frame->height,
+            frame->full_range ? VIDEO_RANGE_FULL : VIDEO_RANGE_DEFAULT, VIDEO_CS_DEFAULT
+      };
+      struct video_scale_info tensor_scaler_info {
+        VIDEO_FORMAT_BGR3, (uint32_t)filter_data->tensor_width,
+            (uint32_t)filter_data->tensor_height, VIDEO_RANGE_DEFAULT, VIDEO_CS_DEFAULT
+      };
+      int ret = video_scaler_create(&filter_data->preprocess_scaler, &tensor_scaler_info, &frame_scaler_info,
+                                    VIDEO_SCALE_BICUBIC);
+      if (ret != 0) {
+        blog(LOG_ERROR, "[Virtual BG detector] Can't create video_scaler_create %d", ret);
+        return frame;
+      }
+    }
+
+    const uint32_t linesize[] = {(uint32_t)filter_data->tensor_width * 3};
+    if (!video_scaler_scale(filter_data->preprocess_scaler, &filter_data->input_u8_buffer, linesize,
+                            frame->data, frame->linesize)) {
+      blog(LOG_ERROR, "[Virtual BG detector] video_scaler_scale failed.");
+      return frame;
+    }
+
+    float *tensor_buffer = filter_data->input_tensor.GetTensorMutableData<float>();
+    for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
+      tensor_buffer[i * 3 + 0] = lut[filter_data->input_u8_buffer[i * 3 + 2]];
+      tensor_buffer[i * 3 + 1] = lut[filter_data->input_u8_buffer[i * 3 + 1]];
+      tensor_buffer[i * 3 + 2] = lut[filter_data->input_u8_buffer[i * 3 + 0]];
+    }
+    filter_data->session->Run(Ort::RunOptions(NULL), filter_data->input_names, &filter_data->input_tensor, 1,
+                              filter_data->output_names, &filter_data->output_tensor, 1);
+
+    const float *tensor_buffer2 = filter_data->output_tensor.GetTensorData<float>();
+    if (filter_data->use_threshold) {
+      for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
+        float val = tensor_buffer2[i] * 0.9f + filter_data->feedback_buffer[i] * 0.1f;
+        filter_data->mask_u8_buffer[i] = val >= filter_data->threshold ? 255 : 0;
+      }
+    } else {
+      for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
+        float val = tensor_buffer2[i] * 0.8f + filter_data->feedback_buffer[i] * 0.2f;
+        filter_data->mask_u8_buffer[i] = val * 255.0f;
+      }
+    }
+
+    if (filter_data->use_mask_blur) {
+      Halide::Runtime::Buffer<uint8_t> input{filter_data->mask_u8_buffer, (int)filter_data->tensor_width,
+                                             filter_data->tensor_height};
+      Halide::Runtime::Buffer<uint8_t> output{filter_data->mask_blurred_u8_buffer,
+                                              (int)filter_data->tensor_width, filter_data->tensor_height};
+
+      blur(input, output);
+      for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
+        filter_data->feedback_buffer[i] = filter_data->mask_blurred_u8_buffer[i] / 255.0f;
+      }
+
+      set_mask_data(filter_data->parent, filter_data->mask_blurred_u8_buffer);
+    } else {
+      set_mask_data(filter_data->parent, filter_data->mask_u8_buffer);
+    }
+
+    if (filter_data->cnt % 300 == 0) {
+      auto stop = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
+      blog(LOG_INFO, "[Virtual BG detector] called filter_video %d duration: %f", filter_data->cnt,
+           duration.count() / 1000000.0);
+    }
+    filter_data->cnt++;
+  } catch (const std::exception &ex) {
+    blog(LOG_ERROR, "[Virtual BG detector] error %s", ex.what());
   }
-  filter_data->cnt++;
   return frame;
 }
 

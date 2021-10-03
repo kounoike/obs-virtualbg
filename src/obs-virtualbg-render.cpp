@@ -46,7 +46,6 @@ void render_destroy(void *data) {
   if (filter_data->mask_buffer) {
     bfree(filter_data->mask_buffer);
   }
-  blog(LOG_INFO, "render_destroy");
 }
 
 void set_texture(render_filter_data *filter_data) {
@@ -88,7 +87,6 @@ void *render_create(obs_data_t *settings, obs_source_t *source) {
       reinterpret_cast<render_filter_data *>(bzalloc(sizeof(struct render_filter_data)));
   filter_data->self = source;
   auto effect_file = obs_module_file("virtualbg.effect");
-  blog(LOG_INFO, "effect_file: %s", effect_file);
   filter_data->effect = gs_effect_create_from_file(effect_file, NULL);
   bfree(effect_file);
   if (!filter_data->effect) {
@@ -110,7 +108,6 @@ void *render_create(obs_data_t *settings, obs_source_t *source) {
 
   obs_leave_graphics();
 
-  blog(LOG_INFO, "render_render_create");
   render_update(filter_data, settings);
 
   return filter_data;
@@ -136,8 +133,6 @@ void render_video_render(void *data, gs_effect_t *effect) {
     }
     if (filter_data->parent == NULL) {
       filter_data->parent = obs_filter_get_parent(filter_data->self);
-      blog(LOG_INFO, "render set parent: %X %s", filter_data->parent,
-           obs_source_get_name(filter_data->parent));
     }
     if (filter_data->texture == NULL) {
       set_texture(filter_data);
@@ -185,7 +180,7 @@ void render_video_render(void *data, gs_effect_t *effect) {
     } else if (filter_data->render_mode == RENDER_MODE_MASK) {
       gs_texture_set_image(filter_data->texture2, filter_data->mask_buffer2, width * 4, false);
     } else {
-      blog(LOG_ERROR, "Unkown render_mode");
+      blog(LOG_ERROR, "[Virtual BG renderer] Unkown render_mode");
       return;
     }
     obs_leave_graphics();
@@ -203,16 +198,13 @@ void render_video_render(void *data, gs_effect_t *effect) {
       gs_effect_set_texture(filter_data->mask_param2, filter_data->texture2);
       obs_source_process_filter_end(filter_data->self, filter_data->effect2, 0, 0);
     } else {
-      blog(LOG_ERROR, "Unkown render_mode");
+      blog(LOG_ERROR, "[Virtual BG renderer] Unkown render_mode");
       return;
     }
 
-    if (filter_data->cnt % 300 == 0) {
-      blog(LOG_INFO, "called %d", filter_data->cnt);
-    }
     filter_data->cnt++;
   } catch (const std::exception &ex) {
-    blog(LOG_ERROR, "error %s", ex.what());
+    blog(LOG_ERROR, "[Virtual BG renderer] error %s", ex.what());
   }
 }
 
