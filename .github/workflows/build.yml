@@ -39,7 +39,7 @@ jobs:
       run: |
         mkdir build && \
         cd build && \
-        cmake .. -DobLibPath=/Applications/OBS.app/Contents/Frameworks -DobsIncludePath=~/ghq/github.com/obsproject/obs-studio -DLLVM_DIR=/usr/local/Cellar/llvm/12.0.1/lib/cmake/llvm \
+        cmake .. -DobLibPath=/Applications/OBS.app/Contents/Frameworks -DobsIncludePath=~/ghq/github.com/obsproject/obs-studio -DLLVM_DIR=/usr/local/Cellar/llvm/12.0.1/lib/cmake/llvm && \
         cmake --build . --config Release
     - name: pack
       run: cpack
