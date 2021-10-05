@@ -40,8 +40,8 @@ void render_destroy(void *data) {
     obs_enter_graphics();
     gs_effect_destroy(filter_data->effect);
     gs_effect_destroy(filter_data->effect2);
-    bfree(filter_data);
     obs_leave_graphics();
+    bfree(filter_data);
   }
   if (filter_data->mask_buffer) {
     bfree(filter_data->mask_buffer);
@@ -49,9 +49,9 @@ void render_destroy(void *data) {
 }
 
 void set_texture(render_filter_data *filter_data) {
-  int width = get_mask_width(filter_data->parent);
-  int height = get_mask_height(filter_data->parent);
-  if (width < 0 || height < 0) {
+  uint32_t width = get_mask_width(filter_data->parent);
+  uint32_t height = get_mask_height(filter_data->parent);
+  if (width == 0 || height == 0) {
     return;
   }
 
@@ -60,10 +60,16 @@ void set_texture(render_filter_data *filter_data) {
     gs_texture_destroy(filter_data->texture);
   }
   filter_data->texture = gs_texture_create(width, height, GS_A8, 1, NULL, GS_DYNAMIC);
+  if (filter_data->texture == NULL) {
+    blog(LOG_ERROR, "[Virtual BG renderer] Can't create A8 texture.");
+  }
   if (filter_data->texture2) {
     gs_texture_destroy(filter_data->texture2);
   }
   filter_data->texture2 = gs_texture_create(width, height, GS_RGBA, 1, NULL, GS_DYNAMIC);
+  if (filter_data->texture2) {
+    blog(LOG_ERROR, "[Virtual BG renderer] Can't create RGBA texture.");
+  }
   obs_leave_graphics();
 }
 
@@ -204,7 +210,7 @@ void render_video_render(void *data, gs_effect_t *effect) {
 
     filter_data->cnt++;
   } catch (const std::exception &ex) {
-    blog(LOG_ERROR, "[Virtual BG renderer] error %s", ex.what());
+    blog(LOG_ERROR, "[Virtual BG renderer] exception in render %s", ex.what());
   }
 }
 
