@@ -1,5 +1,6 @@
 find_path(OnnxRuntime_INCLUDE_DIR
-    NAMES onnxruntime_c_api.h
+    NAMES "onnxruntime_c_api.h"
+    "onnxruntime/core/session/onnxruntime_c_api.h"
     PATHS
         ENV OnnxRuntimePath
         ${OnnxRuntimePath}
@@ -10,7 +11,7 @@ find_path(OnnxRuntime_INCLUDE_DIR
 )
 
 find_library(OnnxRuntime_LIBRARIES
-    NAMES onnxruntime.lib onnxruntime_providers_shared.lib
+    NAMES onnxruntime.lib onnxruntime_providers_shared.lib libonnxruntime.dylib
     PATHS
         ENV OnnxRuntimePath
         ${OnnxRuntimePath}

@@ -2,11 +2,19 @@
 #include <HalideBuffer.h>
 #include <blur.h>
 #include <chrono>
-#include <dml_provider_factory.h>
 #include <media-io/video-scaler.h>
 #include <obs-module.h>
 #include <obs.h>
+
+#ifdef _WIN32
+#include <dml_provider_factory.h>
 #include <onnxruntime_cxx_api.h>
+#endif
+
+#ifdef __APPLE__
+#include <onnxruntime/core/session/onnxruntime_cxx_api.h>
+// #include <onnxruntime/core/providers/cpu/cpu_provider_factory.h>
+#endif
 
 const char *USE_THRESHOLD = "UseThreashold";
 const char *THRESHOLD_VALUE = "ThresholdValue";
@@ -87,11 +95,17 @@ void detector_update(void *data, obs_data_t *settings) {
   Ort::SessionOptions sessionOptions;
 
   sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+
+#if _WIN32
   sessionOptions.DisableMemPattern();
   sessionOptions.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
   Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_DML(sessionOptions, 0));
+#endif
 
   char *modelPath = obs_module_file("model.onnx");
+  static Ort::Env env(ORT_LOGGING_LEVEL_ERROR, "virtual_bg inference");
+
+#if _WIN32
   size_t newSize = strlen(modelPath) + 1;
   wchar_t *wcharModelPath = static_cast<wchar_t *>(bzalloc((newSize) * sizeof(wchar_t)));
   size_t convertedChars = 0;
@@ -100,7 +114,6 @@ void detector_update(void *data, obs_data_t *settings) {
   bfree(modelPath);
 
   try {
-    static Ort::Env env(ORT_LOGGING_LEVEL_ERROR, "virtual_bg inference");
     filter_data->session.reset(new Ort::Session(env, wcharModelPath, sessionOptions));
   } catch (const std::exception &ex) {
     blog(LOG_ERROR, "[Virtual BG detector] Can't create Session error: %s", ex.what());
@@ -108,6 +121,16 @@ void detector_update(void *data, obs_data_t *settings) {
     return;
   }
   bfree(wcharModelPath);
+#elif __APPLE__
+  try {
+    filter_data->session.reset(new Ort::Session(env, modelPath, sessionOptions));
+  } catch (const std::exception &ex) {
+    blog(LOG_ERROR, "[Virtual BG detector] Can't create session %s", ex.what());
+    bfree(modelPath);
+    return;
+  }
+  bfree(modelPath);
+#endif
 
   filter_data->input_names[0] = filter_data->session->GetInputName(0, *filter_data->allocator);
   filter_data->output_names[0] = filter_data->session->GetOutputName(0, *filter_data->allocator);
@@ -147,7 +170,7 @@ void *detector_create(obs_data_t *settings, obs_source_t *source) {
     std::string instance_name{"virtual-background-inference"};
     filter_data->allocator.reset(new Ort::AllocatorWithDefaultOptions());
   } catch (const std::exception &ex) {
-    blog(LOG_ERROR, "create failed %s");
+    blog(LOG_ERROR, "create failed %s", ex.what());
     return NULL;
   }
 
@@ -166,9 +189,9 @@ void *detector_create(obs_data_t *settings, obs_source_t *source) {
 }
 
 void detector_defaults(obs_data_t *settings) {
-  obs_data_set_default_bool(settings, USE_THRESHOLD, TRUE);
+  obs_data_set_default_bool(settings, USE_THRESHOLD, true);
   obs_data_set_default_double(settings, THRESHOLD_VALUE, 0.5);
-  obs_data_set_default_bool(settings, USE_MASK_BLUR, TRUE);
+  obs_data_set_default_bool(settings, USE_MASK_BLUR, true);
 }
 
 obs_properties_t *detector_properties(void *data) {
