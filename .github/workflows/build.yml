@@ -44,7 +44,7 @@ jobs:
     - name: pack
       run: cpack
     - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: mac-archiveß
-          path: build/obs-virtualbg-*.zip
+      uses: actions/upload-artifact@v2
+      with:
+        name: mac-archiveß
+        path: build/obs-virtualbg-*.zip
