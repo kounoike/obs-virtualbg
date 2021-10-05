@@ -2,5 +2,6 @@
 
 set -xe
 
-brew install onnxruntime halide
+# brew install onnxruntime
+brew install halide
 brew install obs --cask
