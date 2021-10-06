@@ -1,8 +1,8 @@
-name: build-windows
+name: build
 on: push
 jobs:
-  build:
-    name: build
+  build_win:
+    name: build on Windows
     runs-on: windows-latest
     steps:
     - name: checkout
@@ -22,4 +22,30 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: windows-archive
+        path: build/obs-virtualbg-*.zip
+  build_mac:
+    name: build on Mac
+    runs-on: macos-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Cache ONNX Runtime
+      uses: actions/cache@v2
+      env:
+        cache-name: onnxruntime
+      with:
+          path: deps/onnxruntime
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('scripts/build_onnxruntime_mac.sh') }}
+    - name: build ONNX Runtime
+      run: ./scripts/build_onnxruntime_mac.sh
+    - name: install deps
+      run: ./scripts/install_deps_mac.sh
+    - name: build
+      run: ./scripts/build_mac.sh
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: mac-archive
         path: build/obs-virtualbg-*.zip

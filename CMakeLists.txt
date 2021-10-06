@@ -134,8 +134,45 @@ if(WIN32)
   set(CPACK_VERBATIM_VARIABLES YES)
   set(CPACK_PACKAGE_VERSION v${SEMVER})
   include(CPack)
-endif()
+elseif(APPLE)
+  # set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
+  set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0)
+  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -fvisibility=default -framework Foundation")
+	set(RELEASE_DIR "${PROJECT_SOURCE_DIR}/release")
 
+  set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -fvisibility=default")
+  set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LINK_FLAGS "${LD_FLAGS} -stdlib=libc++ -fvisibility=default -framework Foundation")
+  set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES PREFIX "")
+  target_link_libraries(${CMAKE_PROJECT_NAME} "${OBS_FRONTEND_LIB}")
+
+  add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMAND
+      "${CMAKE_COMMAND}" -E rm -rf "${RELEASE_DIR}"
+    COMMAND
+      "${CMAKE_COMMAND}" -E make_directory
+        "${RELEASE_DIR}/${CMAKE_PROJECT_NAME}/data"
+        "${RELEASE_DIR}/${CMAKE_PROJECT_NAME}/bin"
+    COMMAND
+      "${CMAKE_COMMAND}" -E copy_directory
+        "${PROJECT_SOURCE_DIR}/data"
+        "${RELEASE_DIR}/${CMAKE_PROJECT_NAME}/data"
+    COMMAND
+      "${CMAKE_COMMAND}" -E copy
+        "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>"
+        "${RELEASE_DIR}/${CMAKE_PROJECT_NAME}/bin"
+    COMMAND
+      "${CMAKE_COMMAND}" -E rm -f
+        "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-v${SEMVER}-macosx.zip"
+    )
+
+  install(DIRECTORY "${RELEASE_DIR}/" DESTINATION .)
+
+  set(CPACK_GENERATOR "ZIP")
+  set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+  set(CPACK_VERBATIM_VARIABLES YES)
+  set(CPACK_PACKAGE_VERSION v${SEMVER})
+  include(CPack)
+endif()
 
 include(ObsHelpers)
 #include(ObsCpack)
