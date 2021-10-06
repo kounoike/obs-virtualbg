@@ -1,7 +1,9 @@
 #!/bin/bash
 
-apt-get install -y libobs-dev
-apt-get install python3-pip
+add-apt-repository ppa:obsproject/obs-studio
+apt-get update
+apt-get install -y obs-studio
+apt-get install -y python3-pip
 pip3 install cmake
 
 DEPS_DIR=$(cd $(dirname $0)/..;pwd)/deps
