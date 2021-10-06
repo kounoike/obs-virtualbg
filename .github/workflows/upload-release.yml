@@ -6,8 +6,8 @@ on:
 name: Upload Release Asset
 
 jobs:
-  build:
-    name: Upload Release Asset
+  release_win:
+    name: Upload Release Asset on Windows
     runs-on: windows-latest
     steps:
     - name: checkout
@@ -25,6 +25,40 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: windows-archive
+        path: build/obs-virtualbg-*.zip
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: build/obs-virtualbg-*.zip
+        tag: ${{ github.ref }}
+        overwrite: true
+        file_glob: true
+  release_mac:
+    name: Upload Release Asset on Mac
+    runs-on: macos-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Cache ONNX Runtime
+      uses: actions/cache@v2
+      env:
+        cache-name: onnxruntime
+      with:
+          path: deps/onnxruntime
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('scripts/build_onnxruntime_mac.sh') }}
+    - name: build ONNX Runtime
+      run: ./scripts/build_onnxruntime_mac.sh
+    - name: install deps
+      run: ./scripts/install_deps_mac.sh
+    - name: build
+      run: ./scripts/build_mac.sh
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: mac-archive
         path: build/obs-virtualbg-*.zip
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
