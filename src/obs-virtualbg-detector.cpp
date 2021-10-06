@@ -116,6 +116,7 @@ void detector_update(void *data, obs_data_t *settings) {
 
   try {
     filter_data->session.reset(new Ort::Session(env, wcharModelPath, sessionOptions));
+    blog(LOG_INFO, "[Virtual BG detector] Create OnnxRuntime session");
   } catch (const std::exception &ex) {
     blog(LOG_ERROR, "[Virtual BG detector] Can't create Session error: %s", ex.what());
     bfree(wcharModelPath);
@@ -171,7 +172,7 @@ void *detector_create(obs_data_t *settings, obs_source_t *source) {
     std::string instance_name{"virtual-background-inference"};
     filter_data->allocator.reset(new Ort::AllocatorWithDefaultOptions());
   } catch (const std::exception &ex) {
-    blog(LOG_ERROR, "create failed %s", ex.what());
+    blog(LOG_ERROR, "[Virtual BG detector] detector_create failed %s", ex.what());
     return NULL;
   }
 
@@ -208,16 +209,21 @@ struct obs_source_frame *detector_filter_video(void *data, struct obs_source_fra
   try {
     auto start = std::chrono::high_resolution_clock::now();
     virtual_bg_filter_data *filter_data = static_cast<virtual_bg_filter_data *>(data);
-    if (filter_data == NULL) {
+    if (filter_data == NULL || frame == NULL || frame->width == 0 || frame->height == 0) {
       return frame;
     }
     if (filter_data->parent == NULL) {
       filter_data->parent = obs_filter_get_parent(filter_data->self);
+      if (filter_data->parent == NULL) {
+        blog(LOG_ERROR, "[Virtual BG detector] Can't get obs_filter_get_parent");
+        return frame;
+      }
       create_mask_data(filter_data->parent, filter_data->tensor_width, filter_data->tensor_height);
     }
 
     if (filter_data->frame_width != frame->width || filter_data->frame_height != frame->height ||
         filter_data->frame_format != frame->format || filter_data->frame_full_range != frame->full_range) {
+      blog(LOG_INFO, "[Virtual BG detector] frame size or format change detected");
       if (filter_data->preprocess_scaler) {
         video_scaler_destroy(filter_data->preprocess_scaler);
         filter_data->preprocess_scaler = NULL;
@@ -242,6 +248,10 @@ struct obs_source_frame *detector_filter_video(void *data, struct obs_source_fra
       if (ret != 0) {
         blog(LOG_ERROR, "[Virtual BG detector] Can't create video_scaler_create %d", ret);
         return frame;
+      } else {
+        blog(LOG_INFO, "[Virtual BG detector] video_scaler_create success. %dx%d -> %dx%d",
+             filter_data->frame_width, filter_data->frame_height, filter_data->tensor_width,
+             filter_data->tensor_height);
       }
     }
 
