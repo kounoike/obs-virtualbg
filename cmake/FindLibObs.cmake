@@ -34,7 +34,7 @@ find_path(LIBOBS_INCLUDE_DIR
 		${obsIncludePath}
 		${obsPath}/libobs
 	PATHS
-		/usr/include /usr/local/include /opt/local/include /sw/include
+		/usr/include /usr/local/include /opt/local/include /sw/include /usr/include/obs
 	PATH_SUFFIXES
 		libobs
 	DOC "Lib OBS include directory"

@@ -1,6 +1,6 @@
 set(OnnxRuntime_DEPS_DIR ${CMAKE_SOURCE_DIR}/deps/onnxruntime)
-if(APPLE AND EXISTS ${OnnxRuntime_DEPS_DIR})
-    file(GLOB OnnxRuntime_LIBRARIES_EX ${OnnxRuntime_DEPS_DIR}/lib/lib*.a)
+if(EXISTS ${OnnxRuntime_DEPS_DIR})
+    file(GLOB OnnxRuntime_LIBRARIES_EX ${OnnxRuntime_DEPS_DIR}/lib/lib*.a ${OnnxRuntime_DEPS_DIR}/lib/lib*.so)
     set(OnnxRuntime_LIBRARIES ${OnnxRuntime_LIBRARIES_EX})
     set(OnnxRuntime_INCLUDE_DIR ${OnnxRuntime_DEPS_DIR}/include)
     message("OnnxRuntime_DEPS_DIR Found!!!!!! ${OnnxRuntime_DEPS_DIR} ${OnnxRuntime_LIBRARIES}")
