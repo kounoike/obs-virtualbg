@@ -58,7 +58,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: install pkgs
-        run: sudo ./scripts/install_pkgs_linux.sh
+        run: mkdir deps && sudo ./scripts/install_pkgs_linux.sh
       - name: install deps
         run: ./scripts/install_deps_linux.sh
       - name: build
