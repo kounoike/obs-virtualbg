@@ -1,5 +1,4 @@
 #include <Halide.h>
-#include <numbers>
 
 using Halide::ConciseCasts::f32;
 using Halide::ConciseCasts::u8_sat;
