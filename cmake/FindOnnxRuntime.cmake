@@ -1,5 +1,5 @@
 set(OnnxRuntime_DEPS_DIR ${CMAKE_SOURCE_DIR}/deps/onnxruntime)
-if(EXISTS ${OnnxRuntime_DEPS_DIR})
+if(NOT WIN32 AND EXISTS ${OnnxRuntime_DEPS_DIR})
     file(GLOB OnnxRuntime_LIBRARIES_EX ${OnnxRuntime_DEPS_DIR}/lib/lib*.a ${OnnxRuntime_DEPS_DIR}/lib/lib*.so)
     set(OnnxRuntime_LIBRARIES ${OnnxRuntime_LIBRARIES_EX})
     set(OnnxRuntime_INCLUDE_DIR ${OnnxRuntime_DEPS_DIR}/include)
