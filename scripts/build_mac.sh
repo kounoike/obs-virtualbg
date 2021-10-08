@@ -6,6 +6,8 @@ pushd $(dirname $0)/..
 OBS_VERSION=$(brew info --json=v2 --cask obs | jq -r .casks[0].version)
 LLVM_VERSION=$(brew info --json=v2 llvm@12 | jq -r .formulae[0].installed[0].version)
 
+echo "Using OBS ${OBS_VERSION}, LLVM ${LLVM_VERSION}"
+
 [ -d deps ] || mkdir deps
 [ -d deps/obs-studio ] && rm -rf deps/obs-studio
 git -C deps clone --single-branch --depth 1 -b ${OBS_VERSION} https://github.com/obsproject/obs-studio.git
