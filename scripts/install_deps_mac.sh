@@ -14,10 +14,10 @@ HALIDE_DIR=${DEPS_DIR}/Halide
 [ -d ${HALIDE_DIR} ] || mkdir ${HALIDE_DIR} && tar zxf ${HALIDE_TGZ} -C ${HALIDE_DIR} --strip-components 1
 
 # for update obs version.
-brew update
+#brew update
 
 # brew install onnxruntime
 brew install llvm@12
 brew install obs --cask
-
+brew upgrade obs --cask --greedy
 
