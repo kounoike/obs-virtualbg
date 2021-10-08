@@ -20,5 +20,4 @@ brew update
 brew install llvm@12
 brew pin llvm
 brew install obs --cask
-brew upgrade obs --cask --greedy
 
