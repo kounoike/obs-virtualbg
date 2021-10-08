@@ -4,7 +4,7 @@ set -xe
 pushd $(dirname $0)/..
 
 OBS_VERSION=$(brew info --json=v2 --cask obs | jq -r .casks[0].version)
-LLVM_VERSION=$(brew info --json=v2 llvm | jq -r .formulae[0].installed[0].version)
+LLVM_VERSION=$(brew info --json=v2 llvm@12 | jq -r .formulae[0].installed[0].version)
 
 [ -d deps ] || mkdir deps
 [ -d deps/obs-studio ] && rm -rf deps/obs-studio
