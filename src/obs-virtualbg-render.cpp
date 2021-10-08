@@ -48,6 +48,19 @@ void render_destroy(void *data) {
   }
 }
 
+void destroy_texture(render_filter_data *filter_data) {
+  obs_enter_graphics();
+  if (filter_data->texture) {
+    gs_texture_destroy(filter_data->texture);
+    filter_data->texture = NULL;
+  }
+  if (filter_data->texture2) {
+    gs_texture_destroy(filter_data->texture2);
+    filter_data->texture2 = NULL;
+  }
+  obs_leave_graphics();
+}
+
 void set_texture(render_filter_data *filter_data) {
   uint32_t width = get_mask_width(filter_data->parent);
   uint32_t height = get_mask_height(filter_data->parent);
@@ -55,19 +68,16 @@ void set_texture(render_filter_data *filter_data) {
     return;
   }
 
-  obs_enter_graphics();
-  if (filter_data->texture) {
-    gs_texture_destroy(filter_data->texture);
+  if (filter_data->texture || filter_data->texture2) {
+    destroy_texture(filter_data);
   }
+  obs_enter_graphics();
   filter_data->texture = gs_texture_create(width, height, GS_A8, 1, NULL, GS_DYNAMIC);
   if (filter_data->texture == NULL) {
     blog(LOG_ERROR, "[Virtual BG renderer] Can't create A8 texture.");
   }
-  if (filter_data->texture2) {
-    gs_texture_destroy(filter_data->texture2);
-  }
   filter_data->texture2 = gs_texture_create(width, height, GS_RGBA, 1, NULL, GS_DYNAMIC);
-  if (filter_data->texture2) {
+  if (filter_data->texture2 == NULL) {
     blog(LOG_ERROR, "[Virtual BG renderer] Can't create RGBA texture.");
   }
   obs_leave_graphics();
@@ -134,33 +144,32 @@ obs_properties_t *render_properties(void *data) {
 void render_video_render(void *data, gs_effect_t *effect) {
   try {
     render_filter_data *filter_data = static_cast<render_filter_data *>(data);
-    if (filter_data == NULL) {
+    if (filter_data == NULL || filter_data->effect == NULL || filter_data->effect2 == NULL) {
       return;
     }
     if (filter_data->parent == NULL) {
       filter_data->parent = obs_filter_get_parent(filter_data->self);
-    }
-    if (filter_data->texture == NULL) {
-      set_texture(filter_data);
-    }
-    uint32_t width = (uint32_t)get_mask_width(filter_data->parent);
-    uint32_t height = (uint32_t)get_mask_height(filter_data->parent);
-    if (width == 0 || height == 0 || !filter_data->texture) {
-      set_texture(filter_data);
-      width = (uint32_t)get_mask_width(filter_data->parent);
-      height = (uint32_t)get_mask_height(filter_data->parent);
-      if (width == 0 || height == 0 || !filter_data->texture) {
+      if (filter_data->parent == NULL) {
         return;
       }
     }
+    uint32_t width = (uint32_t)get_mask_width(filter_data->parent);
+    uint32_t height = (uint32_t)get_mask_height(filter_data->parent);
 
     if (filter_data->mask_width != width || filter_data->mask_height != height) {
+      if (filter_data->texture != NULL || filter_data->texture2 != NULL) {
+        destroy_texture(filter_data);
+      }
       if (filter_data->mask_buffer) {
         bfree(filter_data->mask_buffer);
         filter_data->mask_buffer = NULL;
       }
       filter_data->mask_width = width;
       filter_data->mask_height = height;
+    }
+
+    if (filter_data->texture == NULL || filter_data->texture2 == NULL) {
+      set_texture(filter_data);
     }
 
     if (!filter_data->mask_buffer) {
