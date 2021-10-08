@@ -13,7 +13,13 @@ git -C deps clone --single-branch --depth 1 -b ${OBS_VERSION} https://github.com
 mkdir build
 pushd build
   # cmake .. -DobsPath=../deps/obs-studio -DLLVM_DIR=/usr/local/Cellar/llvm/12.0.1/lib/cmake/llvm
-  cmake .. -DobsLibPath=/Applications/OBS.app/Contents/Frameworks -DobsIncludePath=$(cd ../deps/obs-studio/libobs; pwd) -DOnnxRuntimePath=$(cd ../deps/onnxruntime; pwd) -DLLVM_DIR=/usr/local/Cellar/llvm/${LLVM_VERSION}/lib/cmake/llvm
+  cmake .. \
+    -DobsLibPath=/Applications/OBS.app/Contents/Frameworks \
+    -DobsIncludePath=$(cd ../deps/obs-studio/libobs; pwd) \
+    -DOnnxRuntimePath=$(cd ../deps/onnxruntime; pwd) \
+    -DHalide_DIR=$(cd ../deps/Halide; pwd)/lib/cmake/Halide \
+    -DHalideHelpers_DIR=$(cd ../deps/Halide; pwd)/lib/cmake/HalideHelpers \
+    -DLLVM_DIR=/usr/local/Cellar/llvm/${LLVM_VERSION}/lib/cmake/llvm
   cmake --build . --config Release
   cpack
 popd
