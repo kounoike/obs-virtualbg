@@ -20,6 +20,7 @@
 const char *USE_THRESHOLD = "UseThreashold";
 const char *THRESHOLD_VALUE = "ThresholdValue";
 const char *USE_MASK_BLUR = "UseMaskBlur";
+const char *USE_GPU = "UseGpu";
 
 struct virtual_bg_filter_data {
   obs_source_t *self;
@@ -47,6 +48,7 @@ struct virtual_bg_filter_data {
   bool use_threshold;
   double threshold;
   bool use_mask_blur;
+  bool use_gpu;
 };
 
 float lut[256];
@@ -138,7 +140,9 @@ void detector_setup_ort_session(virtual_bg_filter_data *filter_data) {
 
   sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
-  detector_setup_ort_session_gpu(sessionOptions);
+  if (filter_data->use_gpu) {
+    detector_setup_ort_session_gpu(sessionOptions);
+  }
   detector_setup_ort_session_load_model(filter_data, sessionOptions);
 }
 
@@ -199,6 +203,10 @@ void detector_update(void *data, obs_data_t *settings) {
   filter_data->threshold = (float)obs_data_get_double(settings, THRESHOLD_VALUE);
   filter_data->use_mask_blur = obs_data_get_bool(settings, USE_MASK_BLUR);
 
+#ifdef _WIN32
+  filter_data->use_gpu = obs_data_get_bool(settings, USE_GPU);
+#endif
+
   if (filter_data->preprocess_scaler) {
     video_scaler_destroy(filter_data->preprocess_scaler);
     filter_data->preprocess_scaler = NULL;
@@ -237,6 +245,9 @@ void detector_defaults(obs_data_t *settings) {
   obs_data_set_default_bool(settings, USE_THRESHOLD, true);
   obs_data_set_default_double(settings, THRESHOLD_VALUE, 0.5);
   obs_data_set_default_bool(settings, USE_MASK_BLUR, true);
+#if _WIN32
+  obs_data_set_default_bool(settings, USE_GPU, true);
+#endif
 }
 
 obs_properties_t *detector_properties(void *data) {
@@ -245,6 +256,10 @@ obs_properties_t *detector_properties(void *data) {
   obs_properties_add_bool(ppts, USE_THRESHOLD, obs_module_text(USE_THRESHOLD));
   obs_properties_add_float_slider(ppts, THRESHOLD_VALUE, obs_module_text(THRESHOLD_VALUE), 0.0, 1.0, 0.05);
   obs_properties_add_bool(ppts, USE_MASK_BLUR, obs_module_text(USE_MASK_BLUR));
+#if _WIN32
+  obs_properties_add_bool(ppts, USE_GPU, obs_module_text(USE_GPU));
+#endif
+
   return ppts;
 }
 
