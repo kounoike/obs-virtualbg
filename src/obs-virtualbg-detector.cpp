@@ -89,7 +89,6 @@ void detector_setup_ort_session_gpu(Ort::SessionOptions &sessionOptions) {
 #if _WIN32
   try {
     sessionOptions.DisableMemPattern();
-    sessionOptions.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
     Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_DML(sessionOptions, 0));
 
   } catch (const std::exception &ex) {
@@ -139,6 +138,7 @@ void detector_setup_ort_session(virtual_bg_filter_data *filter_data) {
   Ort::SessionOptions sessionOptions;
 
   sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+  sessionOptions.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
 
   if (filter_data->use_gpu) {
     detector_setup_ort_session_gpu(sessionOptions);
