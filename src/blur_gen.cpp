@@ -22,8 +22,13 @@ public:
   }
 
   void schedule() {
-    output.compute_root().vectorize(x, 8).parallel(y);
-    blur_y.compute_at(output, y).vectorize(x, 8);
+    if (!auto_schedule) {
+      output.compute_root().vectorize(x, 8).parallel(y);
+      blur_y.compute_at(output, y).vectorize(x, 8);
+    } else {
+      output.set_estimates({{0, 256}, {0, 144}});
+      input.set_estimates({{0, 256}, {0, 144}});
+    }
   }
 };
 
