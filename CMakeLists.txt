@@ -28,7 +28,7 @@ set(SOURCES
 
 add_executable(blur_generator src/blur_gen.cpp)
 target_link_libraries(blur_generator PRIVATE Halide::Generator)
-add_halide_library(blur FROM blur_generator GENERATOR blur_generator)
+add_halide_library(blur FROM blur_generator GENERATOR blur_generator TARGETS cmake AUTOSCHEDULER Halide::Adams2019 SCHEDULE blur.schedule STMT_HTML blur_schedule.html)
 
 add_library(${CMAKE_PROJECT_NAME} MODULE
     ${SOURCES})
@@ -94,6 +94,13 @@ if(WIN32)
         COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
             "${CMAKE_COMMAND}" -E copy
                 "${OnnxRuntimePath}/runtimes/win-x64/native/onnxruntime.dll"
+                "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
+        )
+
+        # package the DirectML runtime DLL
+        COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
+            "${CMAKE_COMMAND}" -E copy
+                "${PROJECT_SOURCE_DIR}/deps/directml/bin/x64-win/DirectML.dll"
                 "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
         )
 
