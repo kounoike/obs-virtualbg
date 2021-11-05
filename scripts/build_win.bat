@@ -7,7 +7,7 @@ set DEPS_DIR=%CD%\deps
 
 set ONNXRUNTIME_VERSION=1.9.0
 set DIRECTML_VERSION=1.7.0
-set HALIDE_VERSION=12.0.1
+set HALIDE_VERSION=13.0.0
 
 set ONNXRUNTIME_URL=https://github.com/microsoft/onnxruntime/releases/download/v1.9.0/Microsoft.ML.OnnxRuntime.DirectML.%ONNXRUNTIME_VERSION%.zip
 set ONNXRUNTIME_ZIP=%DEPS_DIR%\Microsoft.ML.OnnxRuntime.DirectML.%ONNXRUNTIME_VERSION%.zip
@@ -17,7 +17,7 @@ set DIRECTML_URL=https://www.nuget.org/api/v2/package/Microsoft.AI.DirectML/%DIR
 set DIRECTML_ZIP=%DEPS_DIR%\Microsoft.AI.DirectML-%DIRECTML_VERSION%.zip
 set DIRECTML_DIR=%DEPS_DIR%\directml
 
-set HALIDE_URL=https://github.com/halide/Halide/releases/download/v12.0.1/Halide-12.0.1-x86-64-windows-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.zip
+set HALIDE_URL=https://github.com/halide/Halide/releases/download/v13.0.0/Halide-13.0.0-x86-64-windows-c3641b6850d156aff6bb01a9c01ef475bd069a31.zip
 set HALIDE_ZIP=Halide-%HALIDE_VERSION%.zip
 set HALIDE_DIR=%DEPS_DIR%\Halide-%HALIDE_VERSION%-x86-64-windows
 
