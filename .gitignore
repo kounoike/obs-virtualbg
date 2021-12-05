@@ -46,3 +46,4 @@ _deps
 build/
 deps/
 release/
+.venv/
