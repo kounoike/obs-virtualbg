@@ -2,6 +2,7 @@
 #pragma once
 
 void create_mask_data(obs_source_t *source, uint32_t width, uint32_t height);
+void destroy_mask_data(obs_source_t *source);
 
 uint32_t get_mask_width(obs_source_t *source);
 

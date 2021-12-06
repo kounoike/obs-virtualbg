@@ -21,6 +21,14 @@ const char *USE_THRESHOLD = "UseThreashold";
 const char *THRESHOLD_VALUE = "ThresholdValue";
 const char *USE_MASK_BLUR = "UseMaskBlur";
 const char *USE_GPU = "UseGpu";
+const char *MODEL_TYPE = "ModelType";
+const char *MODEL_TYPE_SELFIE_SEGMENTATION_STRING = "ModelTypeSelfieSegmentation";
+const char *MODEL_TYPE_HUMANSEG_STRING = "ModelTypeHumanSeg";
+
+enum model_type_t {
+  MODEL_TYPE_SELFIE_SEGMENTATION,
+  MODEL_TYPE_HUMANSEG,
+};
 
 struct virtual_bg_filter_data {
   obs_source_t *self;
@@ -49,6 +57,7 @@ struct virtual_bg_filter_data {
   double threshold;
   bool use_mask_blur;
   bool use_gpu;
+  enum model_type_t model_type;
 };
 
 float lut[256];
@@ -100,9 +109,32 @@ void detector_setup_ort_session_gpu(Ort::SessionOptions &sessionOptions) {
 #endif
 }
 
+void detector_setup_lut_selfie_segmentation() {
+  for (int i = 0; i < 256; ++i) {
+    lut[i] = i / 255.0f;
+  }
+}
+
+void detector_setup_lut_pp_humanseg() {
+  for (int i = 0; i < 256; ++i) {
+    lut[i] = (i / 255.0f - 0.5f) / 0.5f;
+  }
+}
+
 void detector_setup_ort_session_load_model(virtual_bg_filter_data *filter_data,
                                            Ort::SessionOptions &sessionOptions) {
-  char *modelPath = obs_module_file("model.onnx");
+  char *modelPath;
+  blog(LOG_INFO, "[Virtual BG detector] setup ort session and load model.", filter_data);
+  blog(LOG_INFO, "[Virtual BG detector] filter_data: %X", filter_data);
+  blog(LOG_INFO, "[Virtual BG detector] model: %d", filter_data->model_type);
+  if (filter_data->model_type == model_type_t::MODEL_TYPE_SELFIE_SEGMENTATION) {
+    modelPath = obs_module_file("model.onnx");
+    detector_setup_lut_selfie_segmentation();
+  } else {
+    modelPath = obs_module_file("pp_humanseg.onnx");
+    detector_setup_lut_pp_humanseg();
+  }
+  blog(LOG_INFO, "[Virtual BG detector] modelPath: %s", modelPath);
   static Ort::Env env(ORT_LOGGING_LEVEL_ERROR, "virtual_bg inference");
 
 #if _WIN32
@@ -171,8 +203,15 @@ void detector_gather_session_information(virtual_bg_filter_data *filter_data) {
       auto output_info = filter_data->session->GetOutputTypeInfo(0);
       auto input_dims = input_info.GetTensorTypeAndShapeInfo().GetShape();
       auto output_dims = output_info.GetTensorTypeAndShapeInfo().GetShape();
-      filter_data->tensor_width = input_dims[2];
-      filter_data->tensor_height = input_dims[1];
+      if (filter_data->model_type == model_type_t::MODEL_TYPE_SELFIE_SEGMENTATION) {
+        filter_data->tensor_width = input_dims[2];
+        filter_data->tensor_height = input_dims[1];
+      } else {
+        filter_data->tensor_width = input_dims[3];
+        filter_data->tensor_height = input_dims[2];
+      }
+      blog(LOG_INFO, "[Virtual BG detector] update tensor size: [%dx%d]", filter_data->tensor_width,
+           filter_data->tensor_height);
       filter_data->input_u8_buffer =
           (uint8_t *)bmalloc(sizeof(uint8_t) * filter_data->tensor_width * filter_data->tensor_height * 3);
       filter_data->mask_u8_buffer =
@@ -207,18 +246,23 @@ void detector_update(void *data, obs_data_t *settings) {
   filter_data->use_gpu = obs_data_get_bool(settings, USE_GPU);
 #endif
 
+  const char *model_type = obs_data_get_string(settings, MODEL_TYPE);
+  if (strcmp(model_type, MODEL_TYPE_SELFIE_SEGMENTATION_STRING) == 0) {
+    filter_data->model_type = MODEL_TYPE_SELFIE_SEGMENTATION;
+  } else {
+    filter_data->model_type = MODEL_TYPE_HUMANSEG;
+  }
+
   if (filter_data->preprocess_scaler) {
     video_scaler_destroy(filter_data->preprocess_scaler);
     filter_data->preprocess_scaler = NULL;
   }
 
-  detector_setup_ort_session(filter_data);
-  detector_gather_session_information(filter_data);
-}
-
-void detector_setup_lut() {
-  for (int i = 0; i < 256; ++i) {
-    lut[i] = i / 255.0f;
+  try {
+    detector_setup_ort_session(filter_data);
+    detector_gather_session_information(filter_data);
+  } catch (const std::exception &ex) {
+    blog(LOG_ERROR, "detector_update caught exception: %s", ex.what());
   }
 }
 
@@ -236,7 +280,6 @@ void *detector_create(obs_data_t *settings, obs_source_t *source) {
   }
 
   detector_update(filter_data, settings);
-  detector_setup_lut();
 
   return filter_data;
 }
@@ -248,6 +291,7 @@ void detector_defaults(obs_data_t *settings) {
 #if _WIN32
   obs_data_set_default_bool(settings, USE_GPU, true);
 #endif
+  obs_data_set_default_string(settings, MODEL_TYPE, MODEL_TYPE_SELFIE_SEGMENTATION_STRING);
 }
 
 obs_properties_t *detector_properties(void *data) {
@@ -259,6 +303,12 @@ obs_properties_t *detector_properties(void *data) {
 #if _WIN32
   obs_properties_add_bool(ppts, USE_GPU, obs_module_text(USE_GPU));
 #endif
+  obs_property_t *p_model = obs_properties_add_list(ppts, MODEL_TYPE, obs_module_text(MODEL_TYPE),
+                                                    OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+  obs_property_list_add_string(p_model, obs_module_text(MODEL_TYPE_SELFIE_SEGMENTATION_STRING),
+                               MODEL_TYPE_SELFIE_SEGMENTATION_STRING);
+  obs_property_list_add_string(p_model, obs_module_text(MODEL_TYPE_HUMANSEG_STRING),
+                               MODEL_TYPE_HUMANSEG_STRING);
 
   return ppts;
 }
@@ -282,6 +332,7 @@ void detector_setup_preprocess_scaler(virtual_bg_filter_data *filter_data, struc
          filter_data->frame_width, filter_data->frame_height, filter_data->tensor_width,
          filter_data->tensor_height);
   }
+  create_mask_data(filter_data->parent, filter_data->tensor_width, filter_data->tensor_height);
 }
 
 void detector_preprocess(virtual_bg_filter_data *filter_data, struct obs_source_frame *frame) {
@@ -291,12 +342,23 @@ void detector_preprocess(virtual_bg_filter_data *filter_data, struct obs_source_
     blog(LOG_ERROR, "[Virtual BG detector] video_scaler_scale failed.");
     throw new std::runtime_error("video_scaler_scale failed.");
   }
-
-  float *tensor_buffer = filter_data->input_tensor.GetTensorMutableData<float>();
-  for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
-    tensor_buffer[i * 3 + 0] = lut[filter_data->input_u8_buffer[i * 3 + 2]];
-    tensor_buffer[i * 3 + 1] = lut[filter_data->input_u8_buffer[i * 3 + 1]];
-    tensor_buffer[i * 3 + 2] = lut[filter_data->input_u8_buffer[i * 3 + 0]];
+  if (filter_data->model_type == model_type_t::MODEL_TYPE_SELFIE_SEGMENTATION) {
+    float *tensor_buffer = filter_data->input_tensor.GetTensorMutableData<float>();
+    for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
+      tensor_buffer[i * 3 + 0] = lut[filter_data->input_u8_buffer[i * 3 + 2]];
+      tensor_buffer[i * 3 + 1] = lut[filter_data->input_u8_buffer[i * 3 + 1]];
+      tensor_buffer[i * 3 + 2] = lut[filter_data->input_u8_buffer[i * 3 + 0]];
+    }
+  } else {
+    float *tensor_buffer = filter_data->input_tensor.GetTensorMutableData<float>();
+    float *b = tensor_buffer;
+    float *g = &tensor_buffer[filter_data->tensor_width * filter_data->tensor_height];
+    float *r = &tensor_buffer[2 * filter_data->tensor_width * filter_data->tensor_height];
+    for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
+      b[i] = lut[filter_data->input_u8_buffer[i * 3 + 0]];
+      g[i] = lut[filter_data->input_u8_buffer[i * 3 + 1]];
+      r[i] = lut[filter_data->input_u8_buffer[i * 3 + 2]];
+    }
   }
 }
 
@@ -310,7 +372,7 @@ void detector_inference(virtual_bg_filter_data *filter_data) {
   }
 }
 
-void detector_postprocess(virtual_bg_filter_data *filter_data) {
+void detector_postprocess_selfie_segmentation(virtual_bg_filter_data *filter_data) {
   const float *tensor_buffer2 = filter_data->output_tensor.GetTensorData<float>();
   if (filter_data->use_threshold) {
     for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
@@ -340,6 +402,45 @@ void detector_postprocess(virtual_bg_filter_data *filter_data) {
     set_mask_data(filter_data->parent, filter_data->mask_u8_buffer);
   }
 }
+
+void detector_postprocess_humanseg(virtual_bg_filter_data *filter_data) {
+  const float *tensor_buffer2 = filter_data->output_tensor.GetTensorData<float>();
+  if (filter_data->use_threshold) {
+    for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
+      float val = tensor_buffer2[i * 2 + 1] * 0.8f + filter_data->feedback_buffer[i] * 0.2f;
+      filter_data->mask_u8_buffer[i] = val >= filter_data->threshold ? 255 : 0;
+    }
+  } else {
+    for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
+      float val = tensor_buffer2[i * 2 + 1] * 0.8f + filter_data->feedback_buffer[i] * 0.2f;
+      filter_data->mask_u8_buffer[i] = val * 255.0f;
+    }
+  }
+
+  if (filter_data->use_mask_blur) {
+    Halide::Runtime::Buffer<uint8_t> input{filter_data->mask_u8_buffer, (int)filter_data->tensor_width,
+                                           filter_data->tensor_height};
+    Halide::Runtime::Buffer<uint8_t> output{filter_data->mask_blurred_u8_buffer,
+                                            (int)filter_data->tensor_width, filter_data->tensor_height};
+
+    blur(input, output);
+    for (int i = 0; i < filter_data->tensor_width * filter_data->tensor_height; ++i) {
+      filter_data->feedback_buffer[i] = filter_data->mask_blurred_u8_buffer[i] / 255.0f;
+    }
+    set_mask_data(filter_data->parent, filter_data->mask_blurred_u8_buffer);
+  } else {
+    set_mask_data(filter_data->parent, filter_data->mask_u8_buffer);
+  }
+}
+
+void detector_postprocess(virtual_bg_filter_data *filter_data) {
+  if (filter_data->model_type == model_type_t::MODEL_TYPE_SELFIE_SEGMENTATION) {
+    detector_postprocess_selfie_segmentation(filter_data);
+  } else {
+    detector_postprocess_humanseg(filter_data);
+  }
+}
+
 struct obs_source_frame *detector_filter_video(void *data, struct obs_source_frame *frame) {
   try {
     auto start = std::chrono::high_resolution_clock::now();

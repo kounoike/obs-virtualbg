@@ -17,7 +17,13 @@ std::map<obs_source_t *, mask_data> data_map;
 std::mutex data_map_mtx;
 
 void create_mask_data(obs_source_t *source, uint32_t width, uint32_t height) {
+  blog(LOG_INFO, "[DEBUG] create_mask_data %dx%d", width, height);
   std::lock_guard<std::mutex> lock(data_map_mtx);
+  if (data_map.find(source) != data_map.end()) {
+    auto data = data_map.at(source);
+    bfree(data.buffer);
+    data_map.erase(source);
+  }
   struct mask_data data {
     .width = width, .height = height, .buffer = (uint8_t *)bzalloc(sizeof(uint8_t) * width * height),
   };
