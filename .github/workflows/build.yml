@@ -63,8 +63,10 @@ jobs:
         run: ./scripts/install_deps_linux.sh
       - name: build
         run: ./scripts/build_linux.sh
+      - name: package
+        run: ./scripts/package_linux.sh
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: mac-archive
-          path: build/obs-virtualbg-*.zip
+          name: linux-archive
+          path: package/*

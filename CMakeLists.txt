@@ -187,11 +187,17 @@ elseif(UNIX AND NOT APPLE)
   file(GLOB locales data/locale/*.ini)
   file(GLOB models data/*.onnx)
   file(GLOB effects data/*.effect)
+  file(GLOB OnnxRuntime_INSTALL ${OnnxRuntime_DEPS_DIR}/lib/lib*.so*)
 
-  install(TARGETS ${CMAKE_PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR}/obs-plugins)
+  if("${OBS_PLUGIN_DESTINATION}" STREQUAL "")
+    set(OBS_PLUGIN_DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR}/obs-plugins)
+  endif()
+
+  install(TARGETS ${CMAKE_PROJECT_NAME} LIBRARY DESTINATION ${OBS_PLUGIN_DESTINATION}/)
   install(FILES ${locales} DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/obs/obs-plugins/${CMAKE_PROJECT_NAME}/locale)
   install(FILES ${models} DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/obs/obs-plugins/${CMAKE_PROJECT_NAME})
   install(FILES ${effects} DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/obs/obs-plugins/${CMAKE_PROJECT_NAME})
+  install(FILES ${OnnxRuntime_INSTALL} DESTINATION ${OBS_PLUGIN_DESTINATION}/../obs-virtualbg)
 endif()
 
 #include(ObsHelpers)
