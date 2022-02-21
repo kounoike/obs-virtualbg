@@ -6,7 +6,7 @@ cd ..
 set DEPS_DIR=%CD%\deps
 cd %DEPS_DIR%
 
-set OBS_VERSION=27.2.0
+set OBS_VERSION=27.2.1
 
 set OBS_URL=https://github.com/obsproject/obs-studio/archive/refs/tags/%OBS_VERSION%.zip
 set OBS_ZIP=%DEPS_DIR%\obs-studio-%OBS_VERSION%.zip
