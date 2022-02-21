@@ -3,7 +3,7 @@
 set -xe
 cd $(dirname $0)/..
 
-ORT_VERSION=1.9.0
+ORT_VERSION=1.10.0
 
 [ -d deps/onnxruntime ] && exit 0
 mkdir -p deps/onnxruntime
