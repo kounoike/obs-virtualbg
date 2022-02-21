@@ -3,7 +3,7 @@ on: push
 jobs:
   build_win:
     name: build on Windows
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - name: checkout
         uses: actions/checkout@v2
