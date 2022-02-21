@@ -42,4 +42,3 @@ Place a background image, window capture, or game capture source below the filte
 
 Since the human region is detected by inference using a deep learning model, detection error inevitably occur. In some cases, the person's area is not detected and is transparent, and in other cases, the background area is mis-detected and some of the room is shown. In particular, it is not good at recognizing hands, so it may not be suitable for performance. This is a limitation of the detection model and is not something that can be adjusted by adjusting parameters. If you need accurate cropping, please use the green background and chroma key filters.
 
-

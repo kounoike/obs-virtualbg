@@ -30,6 +30,13 @@ add_executable(blur_generator src/blur_gen.cpp)
 target_link_libraries(blur_generator PRIVATE Halide::Generator)
 add_halide_library(blur FROM blur_generator GENERATOR blur_generator TARGETS cmake AUTOSCHEDULER Halide::Adams2019 SCHEDULE blur.schedule STMT_HTML blur_schedule.html)
 
+add_executable(jbf_generator src/jbf_gen.cpp)
+target_link_libraries(jbf_generator PRIVATE Halide::Generator Halide::Tools)
+add_halide_library(jbf FROM jbf_generator GENERATOR joint_bilateral_grid TARGETS cmake AUTOSCHEDULER Halide::Adams2019)
+
+add_executable(jbf_run src/jbf_run.cpp)
+target_link_libraries(jbf_run jbf Halide::ImageIO)
+
 add_library(${CMAKE_PROJECT_NAME} MODULE
     ${SOURCES})
 
@@ -43,7 +50,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 	${LIBOBS_LIBRARIES}
   ${OnnxRuntime_LIBRARIES}
   blur
-  Halide::RunGenMain
+  jbf
 )
 
 
