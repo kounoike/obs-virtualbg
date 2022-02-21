@@ -10,7 +10,7 @@ echo "Using OBS ${OBS_VERSION}, LLVM ${LLVM_VERSION}"
 
 [ -d deps ] || mkdir deps
 [ -d deps/obs-studio ] && rm -rf deps/obs-studio
-git -C deps clone --single-branch --depth 1 -b ${OBS_VERSION} https://github.com/obsproject/obs-studio.git
+git -C deps clone --single-branch --depth 1 -b release/${OBS_VERSION} https://github.com/obsproject/obs-studio.git
 [ -d build ] && rm -rf build
 mkdir build
 pushd build
