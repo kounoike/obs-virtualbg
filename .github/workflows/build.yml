@@ -38,8 +38,8 @@ jobs:
         with:
           path: deps/onnxruntime
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('scripts/build_onnxruntime_mac.sh') }}
-      - name: build ONNX Runtime
-        run: ./scripts/build_onnxruntime_mac.sh
+      # - name: build ONNX Runtime
+      #   run: ./scripts/build_onnxruntime_mac.sh
       - name: install deps
         run: ./scripts/install_deps_mac.sh
       - name: build

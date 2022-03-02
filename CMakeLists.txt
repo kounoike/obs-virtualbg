@@ -151,6 +151,7 @@ elseif(APPLE)
   set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LINK_FLAGS "${LD_FLAGS} -stdlib=libc++ -fvisibility=default -framework Foundation")
   set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES PREFIX "")
   target_link_libraries(${CMAKE_PROJECT_NAME} "${OBS_FRONTEND_LIB}")
+  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -arch arm64 -arch x86_64)
 
   add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
     COMMAND
