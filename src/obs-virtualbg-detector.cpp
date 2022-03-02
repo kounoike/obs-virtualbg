@@ -224,6 +224,7 @@ void detector_setup_lut() {
 
 void *detector_create(obs_data_t *settings, obs_source_t *source) {
   UNUSED_PARAMETER(settings);
+  blog(LOG_INFO, "[Virtual BG detector] detecter_create version:v%s", VBG_VERSION);
   struct virtual_bg_filter_data *filter_data =
       reinterpret_cast<virtual_bg_filter_data *>(bzalloc(sizeof(struct virtual_bg_filter_data)));
   filter_data->self = source;

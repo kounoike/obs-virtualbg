@@ -46,6 +46,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
   Halide::RunGenMain
 )
 
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "VBG_VERSION=\"${SEMVER}\"")
 
 if(WIN32)
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
