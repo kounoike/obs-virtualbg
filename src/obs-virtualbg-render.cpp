@@ -96,6 +96,7 @@ void render_update(void *data, obs_data_t *settings) {
 
 void *render_create(obs_data_t *settings, obs_source_t *source) {
   UNUSED_PARAMETER(settings);
+  blog(LOG_INFO, "[Virtual BG renderer] render_create version=v%s", VBG_VERSION);
 
   obs_enter_graphics();
 
