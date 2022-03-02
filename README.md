@@ -32,6 +32,8 @@ Add **Virtual Background Detector** to Audio/Video Filters. and also add **Virtu
 
 ![](doc/filter_2_en.png)
 
+Since v1.2.0, default inference engine is changed. Now, default inference engine is CPU. But, it is low accuracy, heavy to compute. If you can use GPU, changing to GPU is better. But some case, GPU engine is crashed at initialize phase.
+
 ### Background settings
 
 Place a background image, window capture, or game capture source below the filtered source. Set the size, crop, etc. to complete the settings.
