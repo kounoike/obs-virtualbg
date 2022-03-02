@@ -19,8 +19,8 @@ pushd build
     -DobsLibPath=/Applications/OBS.app/Contents/Frameworks \
     -DobsIncludePath=$(cd ../deps/obs-studio/libobs; pwd) \
     -DOnnxRuntimePath=$(cd ../deps/onnxruntime; pwd) \
-    -DHalide_DIR=$(cd ../deps/Halide; pwd)/lib/cmake/Halide \
-    -DHalideHelpers_DIR=$(cd ../deps/Halide; pwd)/lib/cmake/HalideHelpers \
+    -DHalide_DIR=$(cd ../deps/Halide-`uname -m`; pwd)/lib/cmake/Halide \
+    -DHalideHelpers_DIR=$(cd ../deps/Halide-`uname -m`; pwd)/lib/cmake/HalideHelpers \
     -DLLVM_DIR=/usr/local/Cellar/llvm/${LLVM_VERSION}/lib/cmake/llvm
   cmake --build . --config Release
   cpack

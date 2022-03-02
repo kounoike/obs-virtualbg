@@ -10,12 +10,7 @@
 #include <dml_provider_factory.h>
 #endif
 
-#ifdef __APPLE__
-#include <onnxruntime/core/session/onnxruntime_cxx_api.h>
-// #include <onnxruntime/core/providers/cpu/cpu_provider_factory.h>
-#else
 #include <onnxruntime_cxx_api.h>
-#endif
 
 const char *USE_THRESHOLD = "UseThreashold";
 const char *THRESHOLD_VALUE = "ThresholdValue";

@@ -26,10 +26,6 @@ set(SOURCES
     src/obs-virtualbg-render.cpp
 )
 
-add_executable(blur_generator src/blur_gen.cpp)
-target_link_libraries(blur_generator PRIVATE Halide::Generator)
-add_halide_library(blur FROM blur_generator GENERATOR blur_generator TARGETS cmake AUTOSCHEDULER Halide::Adams2019 SCHEDULE blur.schedule STMT_HTML blur_schedule.html)
-
 add_library(${CMAKE_PROJECT_NAME} MODULE
     ${SOURCES})
 
@@ -38,14 +34,26 @@ include_directories(
     ${LIBOBS_INCLUDE_DIRS}
     ${OnnxRuntime_INCLUDE_DIR}
 )
-    
+
 target_link_libraries(${CMAKE_PROJECT_NAME}
 	${LIBOBS_LIBRARIES}
   ${OnnxRuntime_LIBRARIES}
-  blur
   Halide::RunGenMain
 )
 
+
+add_executable(blur_generator src/blur_gen.cpp)
+target_link_libraries(blur_generator PRIVATE Halide::Generator)
+if(APPLE)
+  add_halide_library(blur FROM blur_generator GENERATOR blur_generator TARGETS cmake AUTOSCHEDULER Halide::Adams2019 SCHEDULE blur.schedule STMT_HTML blur_schedule.html )
+  add_halide_library(blur-arm FROM blur_generator GENERATOR blur_generator TARGETS arm-64-osx AUTOSCHEDULER Halide::Adams2019 SCHEDULE blur.schedule STMT_HTML blur_schedule.html )
+  add_halide_library(blur-x86 FROM blur_generator GENERATOR blur_generator TARGETS x86-64-osx AUTOSCHEDULER Halide::Adams2019 SCHEDULE blur.schedule STMT_HTML blur_schedule.html )
+  target_link_libraries(${CMAKE_PROJECT_NAME} blur-arm blur-x86)
+  add_dependencies(${CMAKE_PROJECT_NAME} blur)
+else()
+  add_halide_library(blur FROM blur_generator GENERATOR blur_generator TARGETS cmake AUTOSCHEDULER Halide::Adams2019 SCHEDULE blur.schedule STMT_HTML blur_schedule.html)
+  target_link_libraries(${CMAKE_PROJECT_NAME} blur)
+endif()
 
 if(WIN32)
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -151,7 +159,9 @@ elseif(APPLE)
   set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LINK_FLAGS "${LD_FLAGS} -stdlib=libc++ -fvisibility=default -framework Foundation")
   set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES PREFIX "")
   target_link_libraries(${CMAKE_PROJECT_NAME} "${OBS_FRONTEND_LIB}")
-  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -arch arm64 -arch x86_64)
+  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -arch=arm64 -arch=x86_64)
+  target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -arch=arm64 -arch=x86_64)
+  target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/deps/Halide-x86/lib ${CMAKE_SOURCE_DIR}/deps/Halide-arn/lib)
 
   add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
     COMMAND
