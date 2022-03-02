@@ -1,3 +1,4 @@
+#include "plugin.hpp"
 #include <map>
 #include <memory>
 #include <mutex>
@@ -76,6 +77,7 @@ extern struct obs_source_info obs_virtualbg_detector_source_info;
 extern struct obs_source_info obs_virtualbg_render_source_info;
 
 bool obs_module_load(void) {
+  blog(LOG_INFO, "[OBS Virtual BG plugin] obs_module_load. version=v%s", VBG_VERSION);
   obs_register_source(&obs_virtualbg_detector_source_info);
   obs_register_source(&obs_virtualbg_render_source_info);
   return true;
