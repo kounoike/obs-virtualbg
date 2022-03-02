@@ -344,7 +344,8 @@ struct obs_source_frame *detector_filter_video(void *data, struct obs_source_fra
   try {
     auto start = std::chrono::high_resolution_clock::now();
     virtual_bg_filter_data *filter_data = static_cast<virtual_bg_filter_data *>(data);
-    if (filter_data == NULL || frame == NULL || frame->width == 0 || frame->height == 0) {
+    if (filter_data == NULL || frame == NULL || frame->width == 0 || frame->height == 0 ||
+        filter_data->tensor_width == 0 || filter_data->tensor_height == 0) {
       return frame;
     }
     if (filter_data->parent == NULL) {
