@@ -19,6 +19,8 @@ find_package(Halide REQUIRED COMPONENTS shared)
 # find_package(Halide REQUIRED)
 
 set(RELEASE_DIR "${PROJECT_SOURCE_DIR}/Release" CACHE STRING "Directory for building release packages")
+set(OBS_VIRTUALBG_USE_CUDA OFF CACHE BOOL "Use CUDA or not")
+
 
 set(SOURCES
     src/plugin.cpp
@@ -65,6 +67,10 @@ if(WIN32)
     "${OBS_FRONTEND_LIB}"
   )
 
+  if(${OBS_VIRTUALBG_USE_CUDA})
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE USE_CUDA=1)
+  endif()
+
 # --- Release package helper ---
 	# The "release" folder has a structure similar OBS' one on Windows
 	set(RELEASE_DIR "${PROJECT_SOURCE_DIR}/release")
@@ -88,20 +94,6 @@ if(WIN32)
         COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
             "${CMAKE_COMMAND}" -E copy
                 "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>"
-                "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
-        )
-
-        # package the onnxruntime DLL with the plugin DLL
-        COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
-            "${CMAKE_COMMAND}" -E copy
-                "${OnnxRuntimePath}/runtimes/win-x64/native/onnxruntime.dll"
-                "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
-        )
-
-        # package the DirectML runtime DLL
-        COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
-            "${CMAKE_COMMAND}" -E copy
-                "${PROJECT_SOURCE_DIR}/deps/directml/bin/x64-win/DirectML.dll"
                 "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
         )
 
@@ -136,11 +128,55 @@ if(WIN32)
                 "${LIBOBS_INCLUDE_DIR}/../${OBS_BUILDDIR_ARCH}/rundir/$<CONFIG>/data/obs-plugins/${CMAKE_PROJECT_NAME}"
         )
     )
+
+
+  if(${OBS_VIRTUALBG_USE_CUDA})
+    add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+      # package the onnxruntime DLL with the plugin DLL
+      COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
+          "${CMAKE_COMMAND}" -E copy
+              "${OnnxRuntimePath}/lib/onnxruntime.dll"
+              "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
+      )
+
+      # package the CUDA runtime DLL
+      COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
+          "${CMAKE_COMMAND}" -E copy
+          "${OnnxRuntimePath}/lib/onnxruntime_providers_cuda.dll"
+          "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
+      )
+      COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
+          "${CMAKE_COMMAND}" -E copy
+          "${OnnxRuntimePath}/lib/onnxruntime_providers_shared.dll"
+          "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
+      )
+    )
+else()
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+  # package the onnxruntime DLL with the plugin DLL
+    COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
+        "${CMAKE_COMMAND}" -E copy
+            "${OnnxRuntimePath}/runtimes/win-x64/native/onnxruntime.dll"
+            "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
+    )
+
+    # package the DirectML runtime DLL
+    COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
+        "${CMAKE_COMMAND}" -E copy
+            "${PROJECT_SOURCE_DIR}/deps/directml/bin/x64-win/DirectML.dll"
+            "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
+    )
+  )
+  endif()
+
   install(DIRECTORY "${RELEASE_DIR}/" DESTINATION .)
   set(CPACK_GENERATOR "ZIP")
   set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
   set(CPACK_VERBATIM_VARIABLES YES)
   set(CPACK_PACKAGE_VERSION v${SEMVER})
+  if(${OBS_VIRTUALBG_USE_CUDA})
+    set(CPACK_PACKAGE_NAME "${CMAKE_PROJECT_NAME}-cuda")
+  endif()
   include(CPack)
 elseif(APPLE)
   # set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)

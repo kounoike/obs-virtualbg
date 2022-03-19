@@ -22,7 +22,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: windows-archive
-          path: build/obs-virtualbg-*.zip
+          path: build*/obs-virtualbg-*.zip
   build_mac:
     name: build on Mac
     runs-on: macos-latest

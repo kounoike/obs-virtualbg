@@ -5,6 +5,7 @@ if(NOT WIN32 AND EXISTS ${OnnxRuntime_DEPS_DIR})
     set(OnnxRuntime_INCLUDE_DIR ${OnnxRuntime_DEPS_DIR}/include)
     message("OnnxRuntime_DEPS_DIR Found!!!!!! ${OnnxRuntime_DEPS_DIR} ${OnnxRuntime_LIBRARIES}")
 else()
+  message("kotti [${OnnxRuntimePath}]")
   find_path(OnnxRuntime_INCLUDE_DIR
       NAMES "onnxruntime_c_api.h"
       "onnxruntime/core/session/onnxruntime_c_api.h"
@@ -18,7 +19,7 @@ else()
   )
 
   find_library(OnnxRuntime_LIBRARIES
-      NAMES onnxruntime.lib onnxruntime_providers_shared.lib libonnxruntime.dylib
+      NAMES onnxruntime.lib onnxruntime_providers_shared.lib onnxruntime_providers_cuda.lib libonnxruntime.dylib
       PATHS
           ENV OnnxRuntimePath
           ${OnnxRuntimePath}

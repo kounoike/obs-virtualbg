@@ -7,13 +7,18 @@
 #include <obs.h>
 
 #ifdef _WIN32
+#ifdef USE_CUDA
+// no include file required
+#else
 #include <dml_provider_factory.h>
+#endif
 #endif
 
 #ifdef __APPLE__
 #include <onnxruntime/core/session/onnxruntime_cxx_api.h>
 // #include <onnxruntime/core/providers/cpu/cpu_provider_factory.h>
 #else
+#include <onnxruntime_c_api.h>
 #include <onnxruntime_cxx_api.h>
 #endif
 
@@ -86,6 +91,16 @@ void detector_destroy(void *data) {
 }
 
 void detector_setup_ort_session_gpu(Ort::SessionOptions &sessionOptions) {
+#if USE_CUDA
+  try {
+    Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_CUDA(sessionOptions, 0));
+  } catch (const std::exception &ex) {
+    blog(LOG_ERROR,
+         "[Virtual BG detector] Can't Append Execution Provider CUDA. Will use CPU inference (its so heavy). "
+         "error: %s",
+         ex.what());
+  }
+#else
 #if _WIN32
   try {
     sessionOptions.DisableMemPattern();
@@ -97,6 +112,7 @@ void detector_setup_ort_session_gpu(Ort::SessionOptions &sessionOptions) {
          "error: %s",
          ex.what());
   }
+#endif
 #endif
 }
 
@@ -203,7 +219,7 @@ void detector_update(void *data, obs_data_t *settings) {
   filter_data->threshold = (float)obs_data_get_double(settings, THRESHOLD_VALUE);
   filter_data->use_mask_blur = obs_data_get_bool(settings, USE_MASK_BLUR);
 
-#ifdef _WIN32
+#if defined(_WIN32) || USE_CUDA
   filter_data->use_gpu = obs_data_get_bool(settings, USE_GPU);
 #endif
 
@@ -246,7 +262,7 @@ void detector_defaults(obs_data_t *settings) {
   obs_data_set_default_bool(settings, USE_THRESHOLD, true);
   obs_data_set_default_double(settings, THRESHOLD_VALUE, 0.5);
   obs_data_set_default_bool(settings, USE_MASK_BLUR, true);
-#if _WIN32
+#if defined(_WIN32) || USE_CUDA
   obs_data_set_default_bool(settings, USE_GPU, false);
 #endif
 }
@@ -257,7 +273,7 @@ obs_properties_t *detector_properties(void *data) {
   obs_properties_add_bool(ppts, USE_THRESHOLD, obs_module_text(USE_THRESHOLD));
   obs_properties_add_float_slider(ppts, THRESHOLD_VALUE, obs_module_text(THRESHOLD_VALUE), 0.0, 1.0, 0.05);
   obs_properties_add_bool(ppts, USE_MASK_BLUR, obs_module_text(USE_MASK_BLUR));
-#if _WIN32
+#if defined(_WIN32) || USE_CUDA
   obs_properties_add_bool(ppts, USE_GPU, obs_module_text(USE_GPU));
 #endif
 

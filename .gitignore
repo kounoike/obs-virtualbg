@@ -44,5 +44,6 @@ CTestTestfile.cmake
 _deps
 
 build/
+build_gpu/
 deps/
 release/
