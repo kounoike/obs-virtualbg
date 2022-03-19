@@ -247,7 +247,7 @@ void detector_defaults(obs_data_t *settings) {
   obs_data_set_default_double(settings, THRESHOLD_VALUE, 0.5);
   obs_data_set_default_bool(settings, USE_MASK_BLUR, true);
 #if _WIN32
-  obs_data_set_default_bool(settings, USE_GPU, true);
+  obs_data_set_default_bool(settings, USE_GPU, false);
 #endif
 }
 
@@ -276,7 +276,9 @@ void detector_setup_preprocess_scaler(virtual_bg_filter_data *filter_data, struc
   int ret = video_scaler_create(&filter_data->preprocess_scaler, &tensor_scaler_info, &frame_scaler_info,
                                 VIDEO_SCALE_BICUBIC);
   if (ret != 0) {
-    blog(LOG_ERROR, "[Virtual BG detector] Can't create video_scaler_create %d", ret);
+    blog(LOG_ERROR, "[Virtual BG detector] Can't create video_scaler_create %d %dx%d -> %dx%d", ret,
+         filter_data->frame_width, filter_data->frame_height, filter_data->tensor_width,
+         filter_data->tensor_height);
     throw new std::runtime_error("Cant create video_scaler_create");
   } else {
     blog(LOG_INFO, "[Virtual BG detector] video_scaler_create success. %dx%d -> %dx%d",
