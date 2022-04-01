@@ -1,6 +1,6 @@
 set(OnnxRuntime_DEPS_DIR ${CMAKE_SOURCE_DIR}/deps/onnxruntime)
 if(NOT WIN32 AND EXISTS ${OnnxRuntime_DEPS_DIR})
-    file(GLOB OnnxRuntime_LIBRARIES_EX ${OnnxRuntime_DEPS_DIR}/lib/lib*.a ${OnnxRuntime_DEPS_DIR}/lib/lib*.so)
+    file(GLOB OnnxRuntime_LIBRARIES_EX ${OnnxRuntime_DEPS_DIR}/lib/lib*)
     set(OnnxRuntime_LIBRARIES ${OnnxRuntime_LIBRARIES_EX})
     set(OnnxRuntime_INCLUDE_DIR ${OnnxRuntime_DEPS_DIR}/include)
     message("OnnxRuntime_DEPS_DIR Found!!!!!! ${OnnxRuntime_DEPS_DIR} ${OnnxRuntime_LIBRARIES}")
@@ -8,7 +8,6 @@ else()
   message("kotti [${OnnxRuntimePath}]")
   find_path(OnnxRuntime_INCLUDE_DIR
       NAMES "onnxruntime_c_api.h"
-      "onnxruntime/core/session/onnxruntime_c_api.h"
       PATHS
           ENV OnnxRuntimePath
           ${OnnxRuntimePath}
@@ -19,7 +18,7 @@ else()
   )
 
   find_library(OnnxRuntime_LIBRARIES
-      NAMES onnxruntime.lib onnxruntime_providers_shared.lib onnxruntime_providers_cuda.lib libonnxruntime.dylib
+      NAMES onnxruntime.lib onnxruntime_providers_shared.lib onnxruntime_providers_cuda.lib libonnxruntime.dylib *.a
       PATHS
           ENV OnnxRuntimePath
           ${OnnxRuntimePath}

@@ -30,7 +30,7 @@ set(SOURCES
 
 add_executable(blur_generator src/blur_gen.cpp)
 target_link_libraries(blur_generator PRIVATE Halide::Generator)
-add_halide_library(blur FROM blur_generator GENERATOR blur_generator TARGETS cmake AUTOSCHEDULER Halide::Adams2019 SCHEDULE blur.schedule STMT_HTML blur_schedule.html)
+add_halide_library(blur FROM blur_generator GENERATOR blur_generator TARGETS host AUTOSCHEDULER Halide::Adams2019 SCHEDULE blur.schedule STMT_HTML blur_schedule.html)
 
 add_library(${CMAKE_PROJECT_NAME} MODULE
     ${SOURCES})
@@ -179,6 +179,8 @@ add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
   endif()
   include(CPack)
 elseif(APPLE)
+  target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE USE_COREML=1 OSX=1)
+  target_link_libraries(${CMAKE_PROJECT_NAME} "-framework CoreML")
   # set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
   set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0)
   # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -fvisibility=default -framework Foundation")
