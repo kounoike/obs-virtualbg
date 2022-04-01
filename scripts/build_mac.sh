@@ -16,6 +16,8 @@ mkdir build
 pushd build
   # cmake .. -DobsPath=../deps/obs-studio -DLLVM_DIR=/usr/local/Cellar/llvm/12.0.1/lib/cmake/llvm
   cmake .. \
+    -DCMAKE_OSX_ARCHITECTURES="x86_64" \
+    -DCMAKE_APPLE_SILICON_PROCESSOR=x86_64 \
     -DobsLibPath=/Applications/OBS.app/Contents/Frameworks \
     -DobsIncludePath=$(cd ../deps/obs-studio/libobs; pwd) \
     -DOnnxRuntimePath=$(cd ../deps/onnxruntime; pwd) \
