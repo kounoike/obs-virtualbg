@@ -51,7 +51,7 @@ jobs:
       #     path: build/obs-virtualbg-*.zip
   build_linux:
     name: build on Linux
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: checkout
         uses: actions/checkout@v2
