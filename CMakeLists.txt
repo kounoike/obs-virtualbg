@@ -198,6 +198,12 @@ elseif(UNIX AND NOT APPLE)
   install(FILES ${models} DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/obs/obs-plugins/${CMAKE_PROJECT_NAME})
   install(FILES ${effects} DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/obs/obs-plugins/${CMAKE_PROJECT_NAME})
   install(FILES ${OnnxRuntime_INSTALL} DESTINATION ${OBS_PLUGIN_DESTINATION}/../obs-virtualbg)
+
+  set(CPACK_GENERATOR "DEB")
+  set(CPACK_PACKAGE_DEPENDS "obs-studio (>= 27.2.0)")
+  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "kounoike.yuusuke@gmail.com")
+  set(CPACK_DEBIAN_PACKAGE_SECTION "video")
+  include(CPack)
 endif()
 
 #include(ObsHelpers)
