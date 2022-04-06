@@ -66,5 +66,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: linux-archive
+          name: ubuntu-20.04-archive
           path: build/obs-virtualbg-*.deb
