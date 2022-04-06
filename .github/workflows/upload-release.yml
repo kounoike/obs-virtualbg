@@ -82,16 +82,16 @@ jobs:
         run: ./scripts/install_deps_linux.sh
       - name: build
         run: ./scripts/build_linux.sh
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: ubuntu-20.04-archive
-        path: build/obs-virtualbg-*.deb
-    - name: Upload binaries to release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: build/obs-virtualbg-*.deb
-        tag: ${{ github.ref }}
-        overwrite: true
-        file_glob: true
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ubuntu-20.04-archive
+          path: build/obs-virtualbg-*.deb
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/obs-virtualbg-*.deb
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
