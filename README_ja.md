@@ -6,15 +6,29 @@
 
 ## 対応OS
 
-現時点では Windows 64bit 環境のみに対応しています。
+- Windows 11 64bit
+- 最新の Mac OS, Intel アーキテクチャ
+- Ubuntu-20.04 on x86_64 アーキテクチャ
 
 ## インストール方法
+
+### Windows
 
 [GitHubのページ](https://github.com/kounoike/obs-virtualbg)右側の**Releases**から最新版のobs-virtualbg-vX.X.X-win64.zipをダウンロードします。
 
 ZIPを展開すると、dataとobs-pluginsというフォルダがあるので、そのままOBS Studioのフォルダにコピーします（デフォルトであれば `C:\Program Files\obs-studio`）。
 
 ※OBS Background removalプラグインをインストールしている場合は先にアンインストール（ZIPに入っていたファイルを削除）してください。ONNXRuntimeのDLLが衝突するためです。
+
+### Mac OS
+
+最新の obs-virtualbg-vX.X.X-Darwin.zip を [norihiro　氏のフォークリポジトリ](https://github.com/norihiro/obs-virtualbg/releases) からダウンロードします。
+
+ZIP を展開して出てくる obs-virtualbg ディレクトリを `~/Library/Application Support/obs-studio/plugins/obs-virtualbg` となるようコピーします。 
+
+### Linux
+
+最新の obs-virtualbg-X.X.X-Linux.deb をダウンロードして、`sudo dpkg -i obs-virtualbg-X.X.X-Linux.deb` を実行します。
 
 
 ## 使い方
