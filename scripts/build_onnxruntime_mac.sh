@@ -13,7 +13,7 @@ ORT_TGZ=./deps/onnxruntime-${ORT_VERSION}.tar.gz
 
 curl -L -o $ORT_TGZ $ORT_URL 
 mkdir -p deps/onnxruntime
-tar -C deps/onnxruntime --strip-components=1 zxf $ORT_TGZ
+tar zxf $ORT_TGZ -C deps/onnxruntime --strip-components=1
 
 pushd deps/onnxruntime
   ./build.sh --config RelWithDebInfo --parallel \
