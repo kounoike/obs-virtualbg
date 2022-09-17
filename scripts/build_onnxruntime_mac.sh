@@ -13,7 +13,7 @@ ORT_ZIP=./deps/onnxruntime-v${ORT_VERSION}.zip
 
 curl -L -o $ORT_ZIP $ORT_URL 
 unzip $ORT_ZIP
-mv deps/onnxruntime-v${ORT_VERSION} deps/onnxruntime
+mv deps/onnxruntime-${ORT_VERSION} deps/onnxruntime
 
 pushd deps/onnxruntime
   ./build.sh --config RelWithDebInfo --parallel \
