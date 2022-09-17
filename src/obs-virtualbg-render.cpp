@@ -40,11 +40,12 @@ void render_destroy(void *data) {
     obs_enter_graphics();
     gs_effect_destroy(filter_data->effect);
     gs_effect_destroy(filter_data->effect2);
+    gs_texture_destroy(filter_data->texture);
+    gs_texture_destroy(filter_data->texture2);
     obs_leave_graphics();
-    bfree(filter_data);
-  }
-  if (filter_data->mask_buffer) {
     bfree(filter_data->mask_buffer);
+    bfree(filter_data->mask_buffer2);
+    bfree(filter_data);
   }
 }
 
