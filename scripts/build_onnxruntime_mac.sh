@@ -8,12 +8,7 @@ ORT_VERSION=1.12.1
 [ -d deps/onnxruntime ] && exit 0
 mkdir -p deps/onnxruntime
 
-ORT_URL=https://github.com/microsoft/onnxruntime/archive/refs/tags/v${ORT_VERSION}.tar.gz
-ORT_TGZ=./deps/onnxruntime-${ORT_VERSION}.tar.gz
-
-curl -L -o $ORT_TGZ $ORT_URL 
-mkdir -p deps/onnxruntime
-tar zxf $ORT_TGZ -C deps/onnxruntime --strip-components=1
+git -C deps clone --recursive --single-branch --depth 1 -b v${ORT_VERSION} https://github.com/microsoft/onnxruntime.git
 
 pushd deps/onnxruntime
   ./build.sh --config RelWithDebInfo --parallel \
