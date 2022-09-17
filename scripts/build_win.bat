@@ -5,8 +5,8 @@ cd %~dp0
 cd ..
 set DEPS_DIR=%CD%\deps
 
-set ONNXRUNTIME_VERSION=1.10.0
-set DIRECTML_VERSION=1.8.0
+set ONNXRUNTIME_VERSION=1.12.1
+set DIRECTML_VERSION=1.9.1
 set HALIDE_VERSION=14.0.0
 
 set ONNXRUNTIME_URL=https://github.com/microsoft/onnxruntime/releases/download/v%ONNXRUNTIME_VERSION%/Microsoft.ML.OnnxRuntime.DirectML.%ONNXRUNTIME_VERSION%.zip

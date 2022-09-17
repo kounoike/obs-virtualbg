@@ -9,7 +9,7 @@ HALIDE_URL=https://github.com/halide/Halide/releases/download/v14.0.0/Halide-14.
 HALIDE_TGZ=${DEPS_DIR}/Halide-${HALIDE_VERSION}.tar.gz
 HALIDE_DIR=${DEPS_DIR}/Halide
 
-ONNXRUNTIME_VERSION=1.10.0
+ONNXRUNTIME_VERSION=1.12.1
 ONNXRUNTIME_URL=https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTIME_VERSION}/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}.tgz
 ONNXRUNTIME_TGZ=${DEPS_DIR}/onnxruntime-${ONNXRUNTIME_VERSION}.tar.gz
 ONNXRUNTIME_GPU_URL=https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTIME_VERSION}/onnxruntime-linux-x64-gpu-${ONNXRUNTIME_VERSION}.tgz
