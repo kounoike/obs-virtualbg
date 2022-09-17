@@ -5,9 +5,9 @@ cd %~dp0
 cd ..
 set DEPS_DIR=%CD%\deps
 
-set ONNXRUNTIME_VERSION=1.10.0
-set DIRECTML_VERSION=1.8.0
-set HALIDE_VERSION=13.0.4
+set ONNXRUNTIME_VERSION=1.12.1
+set DIRECTML_VERSION=1.9.1
+set HALIDE_VERSION=14.0.0
 
 set ONNXRUNTIME_URL=https://github.com/microsoft/onnxruntime/releases/download/v%ONNXRUNTIME_VERSION%/Microsoft.ML.OnnxRuntime.DirectML.%ONNXRUNTIME_VERSION%.zip
 set ONNXRUNTIME_ZIP=%DEPS_DIR%\Microsoft.ML.OnnxRuntime.DirectML.%ONNXRUNTIME_VERSION%.zip
@@ -21,7 +21,7 @@ set DIRECTML_URL=https://www.nuget.org/api/v2/package/Microsoft.AI.DirectML/%DIR
 set DIRECTML_ZIP=%DEPS_DIR%\Microsoft.AI.DirectML-%DIRECTML_VERSION%.zip
 set DIRECTML_DIR=%DEPS_DIR%\directml
 
-set HALIDE_URL=https://github.com/halide/Halide/releases/download/v13.0.4/Halide-13.0.4-x86-64-windows-3a92a3f95b86b7babeed7403a330334758e1d644.zip
+set HALIDE_URL=https://github.com/halide/Halide/releases/download/v14.0.0/Halide-14.0.0-x86-64-windows-6b9ed2afd1d6d0badf04986602c943e287d44e46.zip
 set HALIDE_ZIP=Halide-%HALIDE_VERSION%.zip
 set HALIDE_DIR=%DEPS_DIR%\Halide-%HALIDE_VERSION%-x86-64-windows
 
@@ -50,7 +50,7 @@ IF exist build rmdir /s /q build
 mkdir build
 pushd build
   cmake ^
-    -DobsPath=%DEPS_DIR%\obs-studio ^
+    -DCMAKE_PREFIX_PATH=%DEPS_DIR%\dependencies2022;%DEPS_DIR%\obs-studio\build;%DEPS_DIR%\obs-studio\build\deps ^
     -DOnnxRuntimePath=%ONNXRUNTIME_DIR% ^
     -DCMAKE_SYSTEM_VERSION=10.0.18363.657 ^
     -DHalide_DIR=%HALIDE_DIR%\lib\cmake\Halide ^
@@ -68,7 +68,7 @@ mkdir build_gpu
 pushd build_gpu
   cmake ^
     -DOBS_VIRTUALBG_USE_CUDA=ON ^
-    -DobsPath=%DEPS_DIR%\obs-studio ^
+    -DCMAKE_PREFIX_PATH=%DEPS_DIR%\dependencies2022;%DEPS_DIR%\obs-studio\build;%DEPS_DIR%\obs-studio\build\deps ^
     -DOnnxRuntimePath=%ONNXRUNTIME_GPU_DIR% ^
     -DCMAKE_SYSTEM_VERSION=10.0.18363.657 ^
     -DHalide_DIR=%HALIDE_DIR%\lib\cmake\Halide ^

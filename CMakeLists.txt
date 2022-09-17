@@ -11,7 +11,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 find_package(Threads REQUIRED)
-find_package(LibObs REQUIRED)
+
+find_package(libobs REQUIRED)
+if (EXISTS ${LIBOBS_INCLUDE_DIR}/../cmake/external/ObsPluginHelpers.cmake)
+  include(${LIBOBS_INCLUDE_DIR}/../cmake/external/ObsPluginHelpers.cmake)
+endif()
+
 find_package(OnnxRuntime REQUIRED)
 
 #find_package(HalideHelpers REQUIRED)
@@ -42,7 +47,7 @@ include_directories(
 )
     
 target_link_libraries(${CMAKE_PROJECT_NAME}
-	${LIBOBS_LIBRARIES}
+	OBS::libobs
   ${OnnxRuntime_LIBRARIES}
   blur
   Halide::RunGenMain

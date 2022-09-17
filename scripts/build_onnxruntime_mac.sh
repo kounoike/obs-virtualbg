@@ -3,13 +3,13 @@
 set -xe
 cd $(dirname $0)/..
 
-ORT_VERSION=1.11.0
+ORT_VERSION=1.12.1
 
 [ -d deps/onnxruntime ] && exit 0
 mkdir -p deps/onnxruntime
 
-# git -C deps clone --single-branch --depth 1 -b v${ORT_VERSION} https://github.com/microsoft/onnxruntime.git
-git -C deps clone --recursive --single-branch --depth 1 -b master https://github.com/microsoft/onnxruntime.git
+git -C deps clone --recursive --single-branch --depth 1 -b v${ORT_VERSION} https://github.com/microsoft/onnxruntime.git
+
 pushd deps/onnxruntime
   ./build.sh --config RelWithDebInfo --parallel \
     --use_coreml \
