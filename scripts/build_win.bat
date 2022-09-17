@@ -50,7 +50,7 @@ IF exist build rmdir /s /q build
 mkdir build
 pushd build
   cmake ^
-    -DobsPath=%DEPS_DIR%\obs-studio ^
+    -DCMAKE_PREFIX_PATH=%DEPS_DIR%\dependencies2022;%DEPS_DIR%\obs-studio\build;%DEPS_DIR%\obs-studio\build\deps ^
     -DOnnxRuntimePath=%ONNXRUNTIME_DIR% ^
     -DCMAKE_SYSTEM_VERSION=10.0.18363.657 ^
     -DHalide_DIR=%HALIDE_DIR%\lib\cmake\Halide ^
@@ -68,7 +68,7 @@ mkdir build_gpu
 pushd build_gpu
   cmake ^
     -DOBS_VIRTUALBG_USE_CUDA=ON ^
-    -DobsPath=%DEPS_DIR%\obs-studio ^
+    -DCMAKE_PREFIX_PATH=%DEPS_DIR%\dependencies2022;%DEPS_DIR%\obs-studio\build;%DEPS_DIR%\obs-studio\build\deps ^
     -DOnnxRuntimePath=%ONNXRUNTIME_GPU_DIR% ^
     -DCMAKE_SYSTEM_VERSION=10.0.18363.657 ^
     -DHalide_DIR=%HALIDE_DIR%\lib\cmake\Halide ^
