@@ -11,7 +11,7 @@ mkdir -p deps/onnxruntime
 ORT_URL=https://github.com/microsoft/onnxruntime/archive/refs/tags/v${ORT_VERSION}.tar.gz
 ORT_TGZ=./deps/onnxruntime-${ORT_VERSION}.tar.gz
 
-curl -L -o $ORT_ZIP $ORT_URL 
+curl -L -o $ORT_TGZ $ORT_URL 
 mkdir -p deps/onnxruntime
 tar zxf -C deps/onnxruntime --strip-components=1 $ORT_TGZ
 
