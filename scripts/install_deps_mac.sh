@@ -17,7 +17,7 @@ HALIDE_DIR=${DEPS_DIR}/Halide
 brew update
 
 # brew install onnxruntime
-brew install llvm@12
+brew install llvm@13
 brew pin llvm
 brew install obs --cask
 
