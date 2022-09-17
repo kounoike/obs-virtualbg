@@ -8,8 +8,13 @@ ORT_VERSION=1.12.1
 [ -d deps/onnxruntime ] && exit 0
 mkdir -p deps/onnxruntime
 
-# git -C deps clone --single-branch --depth 1 -b v${ORT_VERSION} https://github.com/microsoft/onnxruntime.git
-git -C deps clone --recursive --single-branch --depth 1 -b master https://github.com/microsoft/onnxruntime.git
+ORT_URL=https://github.com/microsoft/onnxruntime/archive/refs/tags/v${ORT_VERSION}.zip
+ORT_ZIP=./deps/onnxruntime-v${ORT_VERSION}.zip
+
+curl -L -o $ORT_ZIP $ORT_URL 
+unzip $ORT_ZIP
+mv deps/onnxruntime-v${ORT_VERSION} deps/onnxruntime
+
 pushd deps/onnxruntime
   ./build.sh --config RelWithDebInfo --parallel \
     --use_coreml \
