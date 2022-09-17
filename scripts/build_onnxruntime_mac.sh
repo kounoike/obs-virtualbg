@@ -8,12 +8,12 @@ ORT_VERSION=1.12.1
 [ -d deps/onnxruntime ] && exit 0
 mkdir -p deps/onnxruntime
 
-ORT_URL=https://github.com/microsoft/onnxruntime/archive/refs/tags/v${ORT_VERSION}.zip
-ORT_ZIP=./deps/onnxruntime-v${ORT_VERSION}.zip
+ORT_URL=https://github.com/microsoft/onnxruntime/archive/refs/tags/v${ORT_VERSION}.tar.gz
+ORT_TGZ=./deps/onnxruntime-${ORT_VERSION}.tar.gz
 
 curl -L -o $ORT_ZIP $ORT_URL 
-unzip -q $ORT_ZIP
-mv deps/onnxruntime-${ORT_VERSION} deps/onnxruntime
+mkdir -p deps/onnxruntime
+tar zxf -C deps/onnxruntime --strip-components=1 $ORT_TGZ
 
 pushd deps/onnxruntime
   ./build.sh --config RelWithDebInfo --parallel \
