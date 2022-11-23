@@ -10,7 +10,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Cache OBS-Studio deps
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: obs
         with:
@@ -32,7 +32,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Cache ONNX Runtime
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: onnxruntime
         with:
