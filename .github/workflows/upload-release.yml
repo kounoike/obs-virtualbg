@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Cache OBS Studio deps
       uses: actions/cache@v2
       env:
@@ -39,7 +39,7 @@ jobs:
   #   runs-on: macos-latest
   #   steps:
   #   - name: checkout
-  #     uses: actions/checkout@v2
+  #     uses: actions/checkout@v3
   #     with:
   #       fetch-depth: 0
   #   - name: Cache ONNX Runtime
@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: install pkgs
