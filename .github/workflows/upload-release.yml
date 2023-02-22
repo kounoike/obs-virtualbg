@@ -22,7 +22,7 @@ jobs:
     - name: build
       run: .\scripts\build_win.bat
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: windows-archive
         path: build/obs-virtualbg-*.zip
@@ -56,7 +56,7 @@ jobs:
   #   - name: build
   #     run: ./scripts/build_mac.sh
   #   - name: Upload artifacts
-  #     uses: actions/upload-artifact@v2
+  #     uses: actions/upload-artifact@v3
   #     with:
   #       name: mac-archive
   #       path: build/obs-virtualbg-*.zip
@@ -83,7 +83,7 @@ jobs:
       - name: build
         run: ./scripts/build_linux.sh
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ubuntu-20.04-archive
           path: build/obs-virtualbg-*.deb
